@@ -21,7 +21,6 @@ whitenoise  # https://github.com/evansd/whitenoise
 django-anymail[mailgun] # https://github.com/anymail/django-anymail
 django-storages[google] # https://github.com/jschneier/django-storages
 
-
 # Cloud
 django-health-check
 

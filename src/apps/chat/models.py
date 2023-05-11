@@ -13,6 +13,22 @@ from django.dispatch import receiver
 from model_utils.models import TimeStampedModel
 
 
+class Category(models.Model):
+    title = models.CharField(max_length=50)
+    description = models.CharField(max_length=500, default="", blank=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = (
+            "-modified",
+            "title",
+        )
+        verbose_name_plural = 'Categories'
+
+
 class RoomQuerySet(models.QuerySet):
     def filter_for_user(self, user):
         return self.filter(
@@ -46,6 +62,9 @@ class Room(TimeStampedModel):
         return f"images/room/{self.id}/{filename}"
 
     user_attribute = "creator"
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, related_name='room_category_set', null=True
+    )
     creator = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="rooms_creator_set"
     )
