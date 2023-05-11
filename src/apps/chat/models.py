@@ -11,6 +11,27 @@ from django.db.models.manager import BaseManager
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from model_utils.models import TimeStampedModel
+from mptt.fields import TreeForeignKey
+from mptt.models import MPTTModel
+
+
+class Category(MPTTModel):
+    title = models.CharField(max_length=50)
+    description = models.CharField(max_length=500, default="", blank=True)
+    modified = models.DateTimeField(auto_now=True)
+    parent = TreeForeignKey('self', related_name='children',
+                            on_delete=models.SET_NULL,
+                            null=True, blank=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = (
+            "-modified",
+            "title",
+        )
+        verbose_name_plural = 'Categories'
 
 
 class RoomQuerySet(models.QuerySet):
@@ -46,6 +67,9 @@ class Room(TimeStampedModel):
         return f"images/room/{self.id}/{filename}"
 
     user_attribute = "creator"
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, related_name='room_category_set', null=True
+    )
     creator = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="rooms_creator_set"
     )

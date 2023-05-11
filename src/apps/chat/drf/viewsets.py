@@ -2,12 +2,13 @@ from core.drf.permissions import IsOwnerOrReadOnly
 from core.drf.serializers import ErrorResponseSerializer
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
-from rest_framework import parsers, permissions, response, serializers, status
+from rest_framework import parsers, permissions, response, serializers, status,\
+    generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from ..models import Message, MessageImage, Room, RoomUser
+from ..models import Message, MessageImage, Room, RoomUser, Category
 from .serializers import (
     MessageImageSerializer,
     MessageSeenSerializer,
@@ -15,7 +16,26 @@ from .serializers import (
     RoomSerializer,
     RoomUserSerializer,
     UserNameSerializer,
+    CategorySerializer,
 )
+
+
+class CategoriesView(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class RoomsByCategoryView(generics.ListAPIView):
+    serializer_class = RoomSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        category_id = self.kwargs['category_id']
+        category = Category.objects.get(id=category_id)
+        categories = category.get_descendants(include_self=True)
+
+        return Room.objects.filter(category__in=categories)
 
 
 class RoomViewSet(ModelViewSet):

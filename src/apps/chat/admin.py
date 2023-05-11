@@ -1,6 +1,7 @@
 from django.contrib import admin
-
-from .models import Message, MessageImage, Room, RoomUser
+from mptt.admin import MPTTModelAdmin
+from .models import Message, MessageImage, Room, RoomUser,\
+    Category
 
 
 class RoomUserInline(admin.TabularInline):
@@ -13,10 +14,20 @@ class RoomUserAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "is_online", "room__title")
 
 
+@admin.register(Category)
+class CategoryAdmin(MPTTModelAdmin):
+    list_display = (
+        "title",
+        "modified",
+        'id',
+    )
+
+
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
     list_display = (
         "title",
+        'id',
         "creator",
         "created",
     )

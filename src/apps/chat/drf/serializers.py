@@ -8,7 +8,8 @@ from rest_framework import exceptions, serializers
 from rest_framework.relations import ManyRelatedField, PrimaryKeyRelatedField
 from rest_framework_recursive.fields import RecursiveField
 
-from ..models import Message, MessageImage, Room, RoomUser
+from ..models import Message, MessageImage, Room, RoomUser,\
+    Category
 
 
 class MessageSeenSerializer(serializers.Serializer):
@@ -144,6 +145,7 @@ class HashidCharPrimaryKeyRelatedField(PrimaryKeyRelatedField):
 class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
     id = HashidSerializerCharField(read_only=True)
     creator_id = HashidSerializerCharField(read_only=True)
+    category_id = HashidSerializerCharField(read_only=True)
     message_total_count = serializers.IntegerField(read_only=True)
     message_new_count = serializers.IntegerField(read_only=True)
     users = ManyRelatedField(
@@ -162,6 +164,7 @@ class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
             "created",
             "modified",
             "creator_id",
+            'category_id',
             "message_total_count",
             "message_new_count",
             "last_message",
@@ -223,3 +226,17 @@ class UserNameSerializer(serializers.ModelSerializer):
         model = User
         read_only_fields = ("display_name",)
         fields = ("id", *read_only_fields)
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    id = HashidSerializerCharField(read_only=True)
+    parent = HashidSerializerCharField(read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ('id',
+                  'title',
+                  'description',
+                  'modified',
+                  'parent',
+                 )
