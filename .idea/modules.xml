@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/django-df-chat.iml" filepath="$PROJECT_DIR$/.idea/django-df-chat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/django-df-notifications.iml" filepath="$PROJECT_DIR$/.idea/django-df-notifications.iml" />
     </modules>
   </component>
 </project>

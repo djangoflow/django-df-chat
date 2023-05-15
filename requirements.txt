@@ -1,0 +1,24 @@
+django
+djangorestframework
+channels[daphne]
+channels-redis
+djangochannelsrestframework
+
+drf-spectacular[sidecar]
+djangorestframework-recursive
+django-hashid-field
+drf-nested-routers
+djangorestframework-simplejwt
+pyjwt
+django-model-utils
+django-df-notifications
+Pillow
+fcm-django<=1.0.12
+
+
+# test dependencies
+
+django-df-auth
+
+pytest
+pytest-django
