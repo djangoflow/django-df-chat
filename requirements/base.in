@@ -20,10 +20,6 @@ redis  # https://github.com/andymccurdy/redis-py
 whitenoise  # https://github.com/evansd/whitenoise
 django-anymail[mailgun] # https://github.com/anymail/django-anymail
 django-storages[google] # https://github.com/jschneier/django-storages
-<<<<<<< HEAD
-=======
-django-mptt # https://github.com/django-mptt/django-mptt
->>>>>>> 14a5156c626f01bc0390a796854af423ba59056a
 
 # Cloud
 django-health-check

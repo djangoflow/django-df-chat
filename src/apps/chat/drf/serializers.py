@@ -230,10 +230,6 @@ class UserNameSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     id = HashidSerializerCharField(read_only=True)
-<<<<<<< HEAD
-=======
-    parent = HashidSerializerCharField(read_only=True)
->>>>>>> 14a5156c626f01bc0390a796854af423ba59056a
 
     class Meta:
         model = Category
@@ -241,8 +237,4 @@ class CategorySerializer(serializers.ModelSerializer):
                   'title',
                   'description',
                   'modified',
-<<<<<<< HEAD
-=======
-                  'parent',
->>>>>>> 14a5156c626f01bc0390a796854af423ba59056a
                  )

@@ -33,14 +33,8 @@ class RoomsByCategoryView(generics.ListAPIView):
     def get_queryset(self):
         category_id = self.kwargs['category_id']
         category = Category.objects.get(id=category_id)
-<<<<<<< HEAD
 
         return Room.objects.filter(category=category)
-=======
-        categories = category.get_descendants(include_self=True)
-
-        return Room.objects.filter(category__in=categories)
->>>>>>> 14a5156c626f01bc0390a796854af423ba59056a
 
 
 class RoomViewSet(ModelViewSet):
