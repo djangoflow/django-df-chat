@@ -18,11 +18,7 @@ class RoomUserAdmin(admin.ModelAdmin):
 
 
 @admin.register(Category)
-<<<<<<< HEAD
 class CategoryAdmin(admin.ModelAdmin):
-=======
-class CategoryAdmin(MPTTModelAdmin):
->>>>>>> 14a5156c626f01bc0390a796854af423ba59056a
     list_display = (
         "title",
         "modified",
