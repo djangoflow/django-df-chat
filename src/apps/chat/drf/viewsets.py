@@ -1,9 +1,9 @@
 from core.drf.permissions import IsOwnerOrReadOnly
 from core.drf.serializers import ErrorResponseSerializer
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
-from rest_framework import parsers, permissions, response, serializers, status,\
-    generics
+from rest_framework import parsers, permissions, response, serializers, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -20,27 +20,45 @@ from .serializers import (
 )
 
 
-class CategoriesView(generics.ListAPIView):
+# class CategoriesView(generics.ListCreateAPIView):
+#     queryset = Category.objects.all()
+#     serializer_class = CategorySerializer
+#     permission_classes = (permissions.IsAuthenticated,)
+#
+#     def perform_create(self, serializer):
+#         serializer.save(owner=self.request.user)
+#
+#     def get_queryset(self):
+#         return (
+#             super()
+#             .get_queryset()
+#             .filter(owner=self.request.user)
+#         )
+class CategoriesViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated,
+                          IsOwnerOrReadOnly)
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
-
-class RoomsByCategoryView(generics.ListAPIView):
-    serializer_class = RoomSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    def perform_create(self, serializer):
+        serializer.is_valid()
+        serializer.save(owner=self.request.user)
 
     def get_queryset(self):
-        category_id = self.kwargs['category_id']
-        category = Category.objects.get(id=category_id)
-
-        return Room.objects.filter(category=category)
+        return (
+            super()
+            .get_queryset()
+            .filter(owner=self.request.user)
+        )
 
 
 class RoomViewSet(ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsOwnerOrReadOnly)
     serializer_class = RoomSerializer
     queryset = Room.objects.all().select_related("creator").order_by("-created")
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['category']
 
     @action(
         methods=["post"],

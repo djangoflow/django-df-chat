@@ -29,7 +29,6 @@ CORE_EXTENSIONS = [
     "drf_spectacular_sidecar",
     "fcm_django",
     "df_notifications",
-    'mptt',
     *DF_APPS,
 ]
 

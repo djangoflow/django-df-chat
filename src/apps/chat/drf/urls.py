@@ -8,8 +8,7 @@ from .viewsets import (
     MessageViewSet,
     RoomUserViewSet,
     RoomViewSet,
-    CategoriesView,
-    RoomsByCategoryView
+    CategoriesViewSet,
 )
 
 
@@ -21,16 +20,12 @@ else:
 
 router.register("rooms", RoomViewSet, basename="rooms")
 router.register("images", MessageImageViewSet, basename="images")
+router.register("categories", CategoriesViewSet, basename="categories")
 
 
 rooms_router = routers.NestedSimpleRouter(router, "rooms", lookup="room")
 rooms_router.register("users", RoomUserViewSet, basename="rooms-users")
 rooms_router.register("messages", MessageViewSet, basename="rooms-messages")
 
-category_urls = [
-    path('categories/', CategoriesView.as_view()),
-    path('categories/<str:category_id>/rooms/', RoomsByCategoryView.as_view()),
 
-]
-
-urlpatterns = router.urls + rooms_router.urls + category_urls
+urlpatterns = router.urls + rooms_router.urls

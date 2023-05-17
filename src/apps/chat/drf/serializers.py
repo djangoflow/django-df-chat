@@ -145,7 +145,6 @@ class HashidCharPrimaryKeyRelatedField(PrimaryKeyRelatedField):
 class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
     id = HashidSerializerCharField(read_only=True)
     creator_id = HashidSerializerCharField(read_only=True)
-    category_id = HashidSerializerCharField(read_only=True)
     message_total_count = serializers.IntegerField(read_only=True)
     message_new_count = serializers.IntegerField(read_only=True)
     users = ManyRelatedField(
@@ -156,6 +155,7 @@ class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
     )
     last_message = serializers.SerializerMethodField()
     is_muted = serializers.BooleanField(read_only=True)
+    category_id = serializers.CharField(required=False)
 
     class Meta:
         model = Room
@@ -164,13 +164,13 @@ class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
             "created",
             "modified",
             "creator_id",
-            'category_id',
             "message_total_count",
             "message_new_count",
             "last_message",
             "is_muted",
         )
         fields = read_only_fields + (
+            "category_id",
             "title",
             "description",
             "is_public",
@@ -230,6 +230,7 @@ class UserNameSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     id = HashidSerializerCharField(read_only=True)
+    owner = serializers.ReadOnlyField(source='owner.email')
 
     class Meta:
         model = Category
@@ -237,4 +238,5 @@ class CategorySerializer(serializers.ModelSerializer):
                   'title',
                   'description',
                   'modified',
+                  'owner',
                  )

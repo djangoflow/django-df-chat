@@ -14,9 +14,12 @@ from model_utils.models import TimeStampedModel
 
 
 class Category(models.Model):
+    user_attribute = "owner"
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=500, default="", blank=True)
     modified = models.DateTimeField(auto_now=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE,
+                              related_name='categories', null=True)
 
     def __str__(self):
         return self.title
@@ -27,6 +30,7 @@ class Category(models.Model):
             "title",
         )
         verbose_name_plural = 'Categories'
+        unique_together = ('owner', 'title')
 
 
 class RoomQuerySet(models.QuerySet):
@@ -63,7 +67,9 @@ class Room(TimeStampedModel):
 
     user_attribute = "creator"
     category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, related_name='room_category_set', null=True
+        Category, on_delete=models.CASCADE,
+        related_name='room_category_set',
+        null=True, blank=True
     )
     creator = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="rooms_creator_set"
