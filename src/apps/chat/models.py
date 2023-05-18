@@ -13,11 +13,10 @@ from django.dispatch import receiver
 from model_utils.models import TimeStampedModel
 
 
-class Category(models.Model):
+class Category(TimeStampedModel):
     user_attribute = "owner"
     title = models.CharField(max_length=50)
     description = models.CharField(max_length=500, default="", blank=True)
-    modified = models.DateTimeField(auto_now=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE,
                               related_name='categories', null=True)
 
@@ -66,10 +65,8 @@ class Room(TimeStampedModel):
         return f"images/room/{self.id}/{filename}"
 
     user_attribute = "creator"
-    category = models.ForeignKey(
-        Category, on_delete=models.CASCADE,
-        related_name='room_category_set',
-        null=True, blank=True
+    category = models.ManyToManyField(
+        Category, related_name='room_category_set',
     )
     creator = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="rooms_creator_set"

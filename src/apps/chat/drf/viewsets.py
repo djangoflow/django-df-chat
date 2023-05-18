@@ -20,29 +20,13 @@ from .serializers import (
 )
 
 
-# class CategoriesView(generics.ListCreateAPIView):
-#     queryset = Category.objects.all()
-#     serializer_class = CategorySerializer
-#     permission_classes = (permissions.IsAuthenticated,)
-#
-#     def perform_create(self, serializer):
-#         serializer.save(owner=self.request.user)
-#
-#     def get_queryset(self):
-#         return (
-#             super()
-#             .get_queryset()
-#             .filter(owner=self.request.user)
-#         )
 class CategoriesViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (permissions.IsAuthenticated,
                           IsOwnerOrReadOnly)
-    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def perform_create(self, serializer):
-        serializer.is_valid()
         serializer.save(owner=self.request.user)
 
     def get_queryset(self):
