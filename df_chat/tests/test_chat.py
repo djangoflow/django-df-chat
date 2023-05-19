@@ -1,15 +1,20 @@
+from django.contrib.auth import get_user_model
+from django.test import TransactionTestCase
+
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
-from df_chat.models import Message
-from df_chat.models import RoomUser
-from df_chat.models import User
-from df_chat.tests.utils import RoomFactory
-from df_chat.tests.utils import TEST_USER_PASSWORD
-from df_chat.tests.utils import UserFactory
-from django.test import TransactionTestCase
+
+from df_chat.models import Message, RoomUser
+from df_chat.tests.utils import RoomFactory, TEST_USER_PASSWORD, UserFactory
+
+
 from rest_framework.reverse import reverse
+
 from tests.asgi import application
+
 from typing import Tuple
+
+User = get_user_model()
 
 
 class TestChat(TransactionTestCase):
