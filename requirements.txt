@@ -23,3 +23,4 @@ django-df-auth
 factory-boy
 pytest
 pytest-django
+drf-yasg

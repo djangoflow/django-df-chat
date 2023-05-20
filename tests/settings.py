@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "otp_twilio",
     "df_chat",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
