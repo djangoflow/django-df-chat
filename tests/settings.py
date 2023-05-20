@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     "otp_twilio",
     "df_chat",
     "drf_yasg",
-    'django_filters',
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -117,7 +117,7 @@ DF_AUTH = {
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_FILTER_BACKENDS': (
-        'django_filters.rest_framework.DjangoFilterBackend',
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
     ),
 }

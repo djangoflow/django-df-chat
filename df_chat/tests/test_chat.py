@@ -10,7 +10,9 @@ from django.test import TransactionTestCase
 from rest_framework.reverse import reverse
 from tests.asgi import application
 from typing import Tuple
-
+from django.contrib.auth import get_user_model
+import http
+import datetime
 
 class TestChat(TransactionTestCase):
     """
@@ -246,6 +248,88 @@ class TestChat(TransactionTestCase):
         await communicator1.disconnect()
         await communicator2.disconnect()
         await communicator3.disconnect()
+
+    def test_create_message(self):
+        User = get_user_model()
+        user = User.objects.create_superuser(username="test_username", password="test_password")
+        self.client.login(username='test_username', password='test_password')
+        room_create_response = self.client.post(
+            "/api/v1/chat/rooms/",
+            data={"title": "test_room", "users": [user.id]},
+        )
+        self.assertEqual(room_create_response.status_code, http.HTTPStatus.CREATED)
+        room_id = room_create_response.json()["id"]
+        message_create_response = self.client.post(
+            f"/api/v1/chat/rooms/{room_id}/messages/",
+            data={"body": "Test message 1234."},
+        )
+        self.assertEqual(message_create_response.status_code, http.HTTPStatus.CREATED)
+    
+    def test_list_message(self):
+        self.test_create_message()
+        rooms_list_response = self.client.get("/api/v1/chat/rooms/")
+        room_id = rooms_list_response.json()[0]["id"]
+        messages_list_response = self.client.get(
+            f"/api/v1/chat/rooms/{room_id}/messages/",
+        )
+        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+        
+        # * Keyword search
+        ok_bodies = [
+            'Test message 1234.',
+            'Test message 1234',
+            'Test',
+            'test',
+            'Message',
+            'message',
+            '1234',
+        ]
+        for body in ok_bodies:
+            messages_list_response = self.client.get(
+                f"/api/v1/chat/rooms/{room_id}/messages/",
+                {"body": body},
+            )
+            self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+            self.assertNotEqual(messages_list_response.json(), [])
+        not_ok_bodies = [
+            'somethingrandom',
+            'messages',
+        ]
+        for body in not_ok_bodies:
+            messages_list_response = self.client.get(
+                f"/api/v1/chat/rooms/{room_id}/messages/",
+                {"body": body},
+            )
+            self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+            self.assertEqual(messages_list_response.json(), [])
+
+        # * username search
+        messages_list_response = self.client.get(
+                f"/api/v1/chat/rooms/{room_id}/messages/",
+                {"username": "test_username"},
+            )
+        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+        self.assertNotEqual(messages_list_response.json(), [])
+        messages_list_response = self.client.get(
+                f"/api/v1/chat/rooms/{room_id}/messages/",
+                {"username": "invalid_username"},
+            )
+        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+        self.assertEqual(messages_list_response.json(), [])
+
+        # * date range search
+        messages_list_response = self.client.get(
+                f"/api/v1/chat/rooms/{room_id}/messages/",
+                {"created_lte": str(datetime.datetime.now())},
+            )
+        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+        self.assertNotEqual(messages_list_response.json(), [])
+        messages_list_response = self.client.get(
+                f"/api/v1/chat/rooms/{room_id}/messages/",
+                {"created_gte": str(datetime.datetime.now())},
+            )
+        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+        self.assertEqual(messages_list_response.json(), [])
 
 
 # TODO: Trying to connect without providing a token results in an error
