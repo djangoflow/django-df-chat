@@ -14,7 +14,7 @@ django-model-utils
 django-df-notifications
 Pillow
 fcm-django<=1.0.12
-
+django-filter
 
 # test dependencies
 
