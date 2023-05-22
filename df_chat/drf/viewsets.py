@@ -101,6 +101,7 @@ class MessageViewSet(RoomRelatedMixin, ModelViewSet):
     serializer_class = MessageSerializer
     queryset = Message.objects.prefetch_children().distinct()
 
+    # To incorporate the filter backend and the corresponding filter-set.
     filter_backends = (django_filters.rest_framework.DjangoFilterBackend, )
     filterset_class = MessageFilter
 

@@ -89,13 +89,28 @@ class Room(TimeStampedModel):
     image = models.ImageField(upload_to=get_upload_to, null=True, blank=True)
 
     is_public = models.BooleanField(default=True)
+    
+    # ! This is unnecessary when there exists a through-model `RoomUser` model.
     users = models.ManyToManyField(User, blank=True)
+    
     admins = models.ManyToManyField(User, blank=True, related_name="rooms_admin_set")
 
     muted_by = models.ManyToManyField(User, blank=True, related_name="room_muted_set")
 
     objects = RoomQuerySet.as_manager()
 
+    @property
+    def users_count(self) -> int:
+        """
+        Property to access the user-count of the room quickly.
+        Ideally, it should return the count of the instance's related
+            `RoomUser` objects count.
+
+        Returns:
+            int: Number of users in this room.
+        """
+        return self.users.count() if self.users else 0
+    
     def __str__(self):
         return self.title
 

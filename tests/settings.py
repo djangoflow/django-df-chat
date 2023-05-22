@@ -30,8 +30,8 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "otp_twilio",
     "df_chat",
-    "drf_yasg",
-    "django_filters",
+    "drf_yasg",  # for Swagger UI 
+    "django_filters",  # for filter backend
 ]
 
 MIDDLEWARE = [
@@ -117,6 +117,7 @@ DF_AUTH = {
 }
 
 REST_FRAMEWORK = {
+    # For being able to incorporate filter backends to the viewsets.
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
     ),

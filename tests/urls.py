@@ -10,6 +10,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
 
+# Swagger UI schema configuration.
 schema_view = get_schema_view(
     openapi.Info(
         title="Djangoflow Chat",
@@ -24,6 +25,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Route for Swagger UI
     path("swagger/",
          schema_view.with_ui("swagger", cache_timeout=0)),
     path("api/v1/chat/", include("df_chat.drf.urls")),
