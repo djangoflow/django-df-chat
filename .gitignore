@@ -136,3 +136,5 @@ dmypy.json
 
 mediafiles/
 staticfiles/
+src/
+requirements
