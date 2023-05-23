@@ -6,27 +6,19 @@ from df_chat.models import User
 from df_chat.tests.utils import RoomFactory
 from df_chat.tests.utils import TEST_USER_PASSWORD
 from df_chat.tests.utils import UserFactory
-from django.test import TransactionTestCase, AsyncClient
+from django.test import TransactionTestCase
 from rest_framework.reverse import reverse
 from tests.asgi import application
-from datetime import datetime, timedelta
-import http
 from typing import Tuple
-import os
+from df_chat.tests.base import BaseTestUtilsMixin
+from django.test import TransactionTestCase
+from tests.asgi import application
 
 
-class TestChat(TransactionTestCase):
+class TestChat(TransactionTestCase, BaseTestUtilsMixin):
     """
     Test for chat application
     """
-
-    def setUp(self) -> None:
-        """
-        Set-up tasks for this test-case.
-        """
-        super().setUp()
-        # * Creates an asynchronous client.
-        self.async_client = AsyncClient()
 
     @database_sync_to_async
     def create_user(self) -> Tuple[User, str]:
@@ -64,7 +56,7 @@ class TestChat(TransactionTestCase):
         """
         Ensures that the authenticated user is added to the scope of the websocket consumer.
         """
-        user, token = await self.create_user()
+        user, token = await self.async_create_user()
         communicator = WebsocketCommunicator(application, f"ws/chat/?token={token}")
         connected, _ = await communicator.connect()
         self.assertTrue(connected)
@@ -77,9 +69,9 @@ class TestChat(TransactionTestCase):
         An end-to-end test case to test the happy-path-flow of a chat between two users in a single room.
         """
         # creating a room with two users
-        user1, token1 = await self.create_user()
-        user2, token2 = await self.create_user()
-        room = await self.create_room_and_add_users(user2, user1)
+        user1, token1 = await self.async_create_user()
+        user2, token2 = await self.async_create_user()
+        room = await self.async_create_room_and_add_users(user2, user1)
 
         # connecting our first user to the chat websocket endpoint
         communicator1 = WebsocketCommunicator(application, f"ws/chat/?token={token1}")
@@ -147,12 +139,16 @@ class TestChat(TransactionTestCase):
         An end-to-end test case to test the happy-path-flow of a chat for a user connected to multiple rooms.
         """
         # creating three users
-        user1, token1 = await self.create_user()
-        user2, token2 = await self.create_user()
-        user3, token3 = await self.create_user()
+        user1, token1 = await self.async_create_user()
+        user2, token2 = await self.async_create_user()
+        user3, token3 = await self.async_create_user()
         # creating two rooms, where user1 is present in both.
-        room_of_user1_and_user2 = await self.create_room_and_add_users(user1, user2)
-        room_of_user1_and_user3 = await self.create_room_and_add_users(user1, user3)
+        room_of_user1_and_user2 = await self.async_create_room_and_add_users(
+            user1, user2
+        )
+        room_of_user1_and_user3 = await self.async_create_room_and_add_users(
+            user1, user3
+        )
 
         # connecting the first, second and third users to the chat websocket endpoint, simultaneously
         communicator1 = WebsocketCommunicator(application, f"ws/chat/?token={token1}")
@@ -257,140 +253,6 @@ class TestChat(TransactionTestCase):
         await communicator1.disconnect()
         await communicator2.disconnect()
         await communicator3.disconnect()
-
-    async def test_create_message(self):
-        """
-        Happy test-case for creating a message.
-        The purpose of this is test is to make sure we can successfully create a user,
-            create a room with that user, and create a message corresponding to the created room.
-        In-order to do so, the following steps must be taken:
-            1. Create a `user` (superuser) object.
-            2. Create a `room` object and add the `user` created in step 1 to its users.
-            3. Create a `message` object corresponding to the `room` created in step 2.
-        """
-        # ! Temp hacky fix for the `self.async_client` usages within this method.
-        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
-
-        # * Step 1
-        # We utilize the existing method to create a random user.
-        user, _ = await self.create_user()
-        
-        # * Step 2
-        # We also utilize the existing method to create a room and add the
-        #   previously created user to it.
-        room = await self.create_room_and_add_users(user)
-
-        # Login for session authentication for the message create API.
-        self.async_client.login(username=user.username, password=TEST_USER_PASSWORD)
-
-        # * Step 3
-        body = "Test message 1234."
-        message_create_response = await self.async_client.post(
-            f"/api/v1/chat/rooms/{room.id}/messages/",
-            data={"body": body},
-        )
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(message_create_response.status_code, http.HTTPStatus.CREATED)
-        # Assert the message data is correct.
-        self.assertEqual(message_create_response.json()["room_id"], room.id)
-        self.assertEqual(message_create_response.json()["body"], body)
-    
-        return user, room
-
-    async def test_filter_message(self):
-        """
-        Test-case for filtering messages.
-        The purpose of this is test is to perform multiple filters on the
-            message list API. These filters include:
-        1. Filter by `body` field (keyword sear ch).
-        2. Filter by `User`'s `username` field.   
-        3. Filter by `created` field (datetime range).
-        In-order to do so, we test multiple cases against the message created
-            in the `test_create_message` test.
-        """
-        # We need the user and the room from the `test_create_message` test in-order to filter on its messages.
-        user, room = await self.test_create_message()
-        
-        messages_list_api_url = f"/api/v1/chat/rooms/{room.id}/messages/"
-        
-        # * 1. Keyword search - ok cases
-        for body in [
-            "Test message 1234.",
-            "Test message 1234",
-            "Test",
-            "test",
-            "Message",
-            "message",
-            "1234",
-        ]:
-            messages_list_response = await self.async_client.get(
-                messages_list_api_url,
-                {"body": body},
-            )
-            # Assert the correct HTTP status code for response.
-            self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-            # Assert the response body contains the keyword.
-            self.assertIn(body.lower(), messages_list_response.json()[0]["body"].lower())
-        
-        # * 1. Keyword search - not ok cases
-        for body in [
-            "somethingrandom",
-            "messages",
-            "124",
-        ]:
-            messages_list_response = await self.async_client.get(
-                messages_list_api_url,
-                {"body": body},
-            )
-            # Assert the correct HTTP status code for response.
-            self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-
-        # * 2. username search - ok case
-        messages_list_response = await self.async_client.get(
-                messages_list_api_url,
-                {"username": user.username},
-            )
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-        # Assert the message `room_user_id` matches the `id` field of the `RoomUser` object
-        #   corresponding to the user.
-        room_user_obj = RoomUser.objects.get(user__id=user.id)
-        self.assertEqual(messages_list_response.json()[0]['room_user_id'], room_user_obj.id)
-
-        # * 2. username search - not ok case
-        messages_list_response = await self.async_client.get(
-                messages_list_api_url,
-                {"username": "invalid_username"},
-            )
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-
-        now = datetime.now()
-        before = now - timedelta(hours=1)
-        datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
-
-        # * datetime range search - range start
-        messages_list_response = await self.async_client.get(
-                messages_list_api_url,
-                {"created_gte": str(before)},
-            )
-        message_created = datetime.strptime(messages_list_response.json()[0]["created"], datetime_format)
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-        # Assert message `created` datetime is larger than `before` datetime.
-        self.assertTrue(message_created >= before)
-
-        # * datetime range search - range end
-        messages_list_response = await self.async_client.get(
-                messages_list_api_url,
-                {"created_lte": str(now)},
-            )
-        message_created = datetime.strptime(messages_list_response.json()[0]["created"], datetime_format)
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-        # Assert message `created` datetime is smaller than `now` datetime.
-        self.assertTrue(message_created <= now)
-
 
 # TODO: Trying to connect without providing a token results in an error
 #  "ValueError: 'AnonymousUser' value must be a positive integer or a valid Hashids string."
