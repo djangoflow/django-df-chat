@@ -21,7 +21,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-import django_filters.rest_framework
+from django_filters import rest_framework as filters
 
 
 class RoomViewSet(ModelViewSet):
@@ -102,7 +102,7 @@ class MessageViewSet(RoomRelatedMixin, ModelViewSet):
     queryset = Message.objects.prefetch_children().distinct()
 
     # To incorporate the filter backend and the corresponding filter-set.
-    filter_backends = (django_filters.rest_framework.DjangoFilterBackend, )
+    filter_backends = (filters.DjangoFilterBackend, )
     filterset_class = MessageFilter
 
     @action(

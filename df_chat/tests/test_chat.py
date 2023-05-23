@@ -14,6 +14,7 @@ import http
 from typing import Tuple
 import os
 
+
 class TestChat(TransactionTestCase):
     """
     Test for chat application
