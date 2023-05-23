@@ -54,9 +54,11 @@ class Category(TimeStampedModel):
     description = models.CharField(max_length=500, default="", blank=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE,
                               related_name='categories', null=True)
+    rooms = models.ManyToManyField('Room',
+                                   related_name='category_rooms_set')
 
     def __str__(self):
-        return self.title
+        return f"{self.title}"
 
     class Meta:
         ordering = (
@@ -100,9 +102,6 @@ class Room(TimeStampedModel):
         return f"images/room/{self.id}/{filename}"
 
     user_attribute = "creator"
-    category = models.ManyToManyField(
-        Category, related_name='room_category_set',
-    )
     creator = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="rooms_creator_set"
     )

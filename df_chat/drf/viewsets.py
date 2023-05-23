@@ -27,7 +27,6 @@ from rest_framework.viewsets import ModelViewSet
 from ..models import Message, MessageImage, Room, RoomUser, Category
 
 
-
 class CategoriesViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -50,7 +49,7 @@ class RoomViewSet(ModelViewSet):
     serializer_class = RoomSerializer
     queryset = Room.objects.all().select_related("creator").order_by("-created")
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['category']
+    filterset_fields = ['category_rooms_set']
 
     @action(
         methods=["post"],

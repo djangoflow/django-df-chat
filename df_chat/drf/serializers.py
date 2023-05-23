@@ -173,6 +173,10 @@ class HashidCharPrimaryKeyRelatedField(PrimaryKeyRelatedField):
 class CategorySerializer(serializers.ModelSerializer):
     id = HashidSerializerCharField(read_only=True)
     owner = serializers.ReadOnlyField(source='owner.email')
+    rooms = HashidCharPrimaryKeyRelatedField(
+        queryset=Room.objects.all(),
+        many=True,
+    )
 
     class Meta:
         model = Category
@@ -181,6 +185,7 @@ class CategorySerializer(serializers.ModelSerializer):
                   'description',
                   'modified',
                   'owner',
+                  'rooms',
                   )
 
 
@@ -197,9 +202,9 @@ class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
     )
     last_message = serializers.SerializerMethodField()
     is_muted = serializers.BooleanField(read_only=True)
-    category = HashidCharPrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
+    category_rooms_set = CategorySerializer(
         many=True,
+        required=False
     )
 
     class Meta:
@@ -213,9 +218,9 @@ class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
             "message_new_count",
             "last_message",
             "is_muted",
+            "category_rooms_set",
         )
         fields = read_only_fields + (
-            "category",
             "title",
             "description",
             "is_public",
