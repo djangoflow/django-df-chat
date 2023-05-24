@@ -89,15 +89,15 @@ class Room(TimeStampedModel):
     image = models.ImageField(upload_to=get_upload_to, null=True, blank=True)
 
     is_public = models.BooleanField(default=True)
-    
+
     users = models.ManyToManyField(User, blank=True)
-    
+
     admins = models.ManyToManyField(User, blank=True, related_name="rooms_admin_set")
 
     muted_by = models.ManyToManyField(User, blank=True, related_name="room_muted_set")
 
     objects = RoomQuerySet.as_manager()
-    
+
     def __str__(self):
         return self.title
 

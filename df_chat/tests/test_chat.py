@@ -3,6 +3,7 @@ from channels.testing import WebsocketCommunicator
 from df_chat.models import Message
 from df_chat.models import RoomUser
 from df_chat.models import User
+from df_chat.tests.base import BaseTestUtilsMixin
 from df_chat.tests.utils import RoomFactory
 from df_chat.tests.utils import TEST_USER_PASSWORD
 from df_chat.tests.utils import UserFactory
@@ -10,9 +11,6 @@ from django.test import TransactionTestCase
 from rest_framework.reverse import reverse
 from tests.asgi import application
 from typing import Tuple
-from df_chat.tests.base import BaseTestUtilsMixin
-from django.test import TransactionTestCase
-from tests.asgi import application
 
 
 class TestChat(TransactionTestCase, BaseTestUtilsMixin):
@@ -253,6 +251,7 @@ class TestChat(TransactionTestCase, BaseTestUtilsMixin):
         await communicator1.disconnect()
         await communicator2.disconnect()
         await communicator3.disconnect()
+
 
 # TODO: Trying to connect without providing a token results in an error
 #  "ValueError: 'AnonymousUser' value must be a positive integer or a valid Hashids string."

@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "otp_twilio",
     "df_chat",
-    "drf_spectacular", 
+    "drf_spectacular",
     "django_filters",
 ]
 
@@ -117,9 +117,7 @@ DF_AUTH = {
 }
 
 REST_FRAMEWORK = {
-    "DEFAULT_FILTER_BACKENDS": (
-        "django_filters.rest_framework.DjangoFilterBackend",
-    ),
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),

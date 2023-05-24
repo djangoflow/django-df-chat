@@ -3,6 +3,7 @@ from ..models import MessageImage
 from ..models import Room
 from ..models import RoomUser
 from ..permissions import IsOwnerOrReadOnly
+from .filters import MessageFilter
 from .serializers import ErrorResponseSerializer
 from .serializers import MessageImageSerializer
 from .serializers import MessageSeenSerializer
@@ -10,8 +11,8 @@ from .serializers import MessageSerializer
 from .serializers import RoomSerializer
 from .serializers import RoomUserSerializer
 from .serializers import UserNameSerializer
-from .filters import MessageFilter
 from django.shortcuts import get_object_or_404
+from django_filters import rest_framework as filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import parsers
 from rest_framework import permissions
@@ -21,7 +22,6 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from django_filters import rest_framework as filters
 
 
 class RoomViewSet(ModelViewSet):
@@ -101,7 +101,7 @@ class MessageViewSet(RoomRelatedMixin, ModelViewSet):
     serializer_class = MessageSerializer
     queryset = Message.objects.prefetch_children().distinct()
 
-    filter_backends = (filters.DjangoFilterBackend, )
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = MessageFilter
 
     @action(
