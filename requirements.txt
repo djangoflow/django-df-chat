@@ -24,3 +24,4 @@ factory-boy
 pytest
 pytest-django
 drf-yasg
+pre-commit

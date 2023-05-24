@@ -30,8 +30,8 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "otp_twilio",
     "df_chat",
-    "drf_yasg",  # for Swagger UI 
-    "django_filters",  # for filter backend
+    "drf_spectacular", 
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -117,7 +117,6 @@ DF_AUTH = {
 }
 
 REST_FRAMEWORK = {
-    # For being able to incorporate filter backends to the viewsets.
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
     ),
@@ -125,4 +124,12 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Djangoflow Chat",
+    "DESCRIPTION": "Opinionated Django Chat",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
