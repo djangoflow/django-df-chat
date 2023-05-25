@@ -22,11 +22,12 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
 
         message_endpoint = reverse("rooms-messages-list", kwargs={"room_pk": room.pk})
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token)
-        response = self.client.post(message_endpoint, {"body": "Hi"})
+        body = "Test message 1234."
+        response = self.client.post(message_endpoint, {"body": body})
         message = response.json()
 
         room_user = user.roomuser_set.get()
-        self.assertEqual(message["body"], "Hi")
+        self.assertEqual(message["body"], body)
         self.assertTrue(message["is_me"])
         self.assertEqual(message["room_user_id"], room_user.pk)
         self.assertIsNone(message["parent_id"])
@@ -35,22 +36,15 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
 
         return user, room
 
-    async def test_filter_message(self):
+    def test_filter_message_by_keyword(self):
         """
-        Test-case for filtering messages.
-        The purpose of this is test is to perform multiple filters on the
-            message list API. These filters include:
-        1. Filter by `body` field (keyword sear ch).
-        2. Filter by `User`'s `username` field.
-        3. Filter by `created` field (datetime range).
-        In-order to do so, we test multiple cases against the message created
-            in the `test_create_message` test.
+        Test-case for filtering messages by the `Message` model's `body` field.
         """
-        user, room = await self.test_message_creation_success()
+        _, room = self.test_message_creation_success()
+        messages_list_endpoint = reverse(
+            "rooms-messages-list", kwargs={"room_pk": room.pk}
+        )
 
-        messages_list_api_url = f"/api/v1/chat/rooms/{room.id}/messages/"
-
-        # * 1. Keyword search - ok cases
         for body in [
             "Test message 1234.",
             "Test message 1234",
@@ -60,8 +54,8 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
             "message",
             "1234",
         ]:
-            messages_list_response = await self.async_client.get(
-                messages_list_api_url,
+            messages_list_response = self.client.get(
+                messages_list_endpoint,
                 {"body": body},
             )
             # Assert the correct HTTP status code for response.
@@ -71,22 +65,29 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
                 body.lower(), messages_list_response.json()[0]["body"].lower()
             )
 
-        # * 1. Keyword search - not ok cases
         for body in [
             "somethingrandom",
             "messages",
             "124",
         ]:
-            messages_list_response = await self.async_client.get(
-                messages_list_api_url,
+            messages_list_response = self.client.get(
+                messages_list_endpoint,
                 {"body": body},
             )
             # Assert the correct HTTP status code for response.
             self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
 
-        # * 2. username search - ok case
-        messages_list_response = await self.async_client.get(
-            messages_list_api_url,
+    def test_filter_message_by_username(self):
+        """
+        Test-case for filtering messages by the `Message` model's related `User`'s `username` field.
+        """
+        user, room = self.test_message_creation_success()
+        messages_list_endpoint = reverse(
+            "rooms-messages-list", kwargs={"room_pk": room.pk}
+        )
+
+        messages_list_response = self.client.get(
+            messages_list_endpoint,
             {"username": user.username},
         )
         # Assert the correct HTTP status code for response.
@@ -98,21 +99,28 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
             messages_list_response.json()[0]["room_user_id"], room_user_obj.id
         )
 
-        # * 2. username search - not ok case
-        messages_list_response = await self.async_client.get(
-            messages_list_api_url,
+        messages_list_response = self.client.get(
+            messages_list_endpoint,
             {"username": "invalid_username"},
         )
         # Assert the correct HTTP status code for response.
         self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
 
+    def test_filter_message_by_date_range(self):
+        """
+        Test-case for filtering messages by the `Message` model's `created` field.
+        """
+        user, room = self.test_message_creation_success()
+        messages_list_endpoint = reverse(
+            "rooms-messages-list", kwargs={"room_pk": room.pk}
+        )
+
         now = datetime.now()
         before = now - timedelta(hours=1)
         datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
 
-        # * datetime range search - range start
-        messages_list_response = await self.async_client.get(
-            messages_list_api_url,
+        messages_list_response = self.client.get(
+            messages_list_endpoint,
             {"created_gte": str(before)},
         )
         message_created = datetime.strptime(
@@ -124,8 +132,8 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
         self.assertTrue(message_created >= before)
 
         # * datetime range search - range end
-        messages_list_response = await self.async_client.get(
-            messages_list_api_url,
+        messages_list_response = self.client.get(
+            messages_list_endpoint,
             {"created_lte": str(now)},
         )
         message_created = datetime.strptime(
