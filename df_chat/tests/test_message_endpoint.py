@@ -76,6 +76,8 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
             )
             # Assert the correct HTTP status code for response.
             self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+            # Assert the response is an empty list.
+            self.assertEqual(messages_list_response.json(), [])
 
     def test_filter_message_by_username(self):
         """
@@ -105,6 +107,8 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
         )
         # Assert the correct HTTP status code for response.
         self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+        # Assert the response is an empty list.
+        self.assertEqual(messages_list_response.json(), [])
 
     def test_filter_message_by_date_range(self):
         """
