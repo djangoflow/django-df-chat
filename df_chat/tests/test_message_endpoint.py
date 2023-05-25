@@ -144,6 +144,16 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
         # Assert message `created` datetime is smaller than `now` datetime.
         self.assertTrue(message_created <= now)
 
+        # * datetime range search - now results
+        messages_list_response = self.client.get(
+            messages_list_endpoint,
+            {"created_lte": str(before)},
+        )
+        # Assert the correct HTTP status code for response.
+        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
+        # Assert no  messages are created after `before` time.
+        self.assertEqual(messages_list_response.json(), [])
+
     # TODOS: We should also implement the following tests:
     # - Fail to create a message when the user is not authenticated.
     # - Ensure that the endpoint returns a 404 error
