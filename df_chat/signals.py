@@ -1,7 +1,6 @@
+from df_chat.models import Message
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
-
-from df_chat.models import Message
 
 
 @receiver(post_delete, sender=Message)

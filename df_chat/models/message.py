@@ -1,18 +1,15 @@
-from django.db.models.manager import BaseManager
-from django.contrib.auth import get_user_model
-from django.db.models import Exists, OuterRef
-from django.db import models
-
+from df_chat.models import RoomUser
 from df_notifications.decorators import register_rule_model
 from df_notifications.models import NotificationModelAsyncRule
-
-from model_utils.models import TimeStampedModel
-
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.db.models import Exists
+from django.db.models import OuterRef
+from django.db.models.manager import BaseManager
 from itertools import repeat
-
+from model_utils.models import TimeStampedModel
 from typing import List
 
-from df_chat.models import RoomUser
 
 User = get_user_model()
 
@@ -23,7 +20,11 @@ class MessageQuerySet(models.QuerySet):
         return self.prefetch_related("images", lookup)
 
     def annotate_is_seen_by_me(self, user=None):
-        return self.annotate(is_seen_by_me=Exists(Message.objects.filter(seen_by=user, id=OuterRef("id"))))
+        return self.annotate(
+            is_seen_by_me=Exists(
+                Message.objects.filter(seen_by=user, id=OuterRef("id"))
+            )
+        )
 
 
 class MessageManager(BaseManager.from_queryset(MessageQuerySet)):
@@ -45,7 +46,9 @@ class Message(TimeStampedModel):
     # TODO(alexis): consider through a model to record timestamps when the message is seen / sent to implement
     # whatsapp like double checkmarks
     seen_by = models.ManyToManyField(User, blank=True, related_name="message_seen_set")
-    received_by = models.ManyToManyField(User, blank=True, related_name="message_received_set")
+    received_by = models.ManyToManyField(
+        User, blank=True, related_name="message_received_set"
+    )
 
     def reactions(self):
         return [m for m in self.children.all() if m.is_reaction]

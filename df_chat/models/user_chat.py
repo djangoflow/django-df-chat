@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+
 User = get_user_model()
 
 
@@ -22,9 +23,11 @@ class UserChat(models.Model):
     which will then be visible to all the rooms that the user is a part of.
     """
 
-    user = models.OneToOneField(User, related_name="user_chat", on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        User, related_name="user_chat", on_delete=models.CASCADE
+    )
     is_online = models.BooleanField(default=False)
-    
+
     objects = UserChatManager()
 
     def __str__(self):

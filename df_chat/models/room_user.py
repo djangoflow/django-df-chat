@@ -1,7 +1,7 @@
+from df_chat.models import Room
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from df_chat.models import Room
 
 User = get_user_model()
 

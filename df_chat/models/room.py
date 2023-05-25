@@ -1,18 +1,31 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Exists, OuterRef, Count, F
 from django.db import models
-
+from django.db.models import Count
+from django.db.models import Exists
+from django.db.models import F
+from django.db.models import OuterRef
+from django.db.models import Q
 from model_utils.models import TimeStampedModel
+
 
 User = get_user_model()
 
 
 class RoomQuerySet(models.QuerySet):
     def filter_for_user(self, user):
-        return self.filter(Q(is_public=True) | Q(users=user) | Q(admins=user) | Q(creator=user)).distinct()
+        return self.filter(
+            Q(is_public=True) | Q(users=user) | Q(admins=user) | Q(creator=user)
+        ).distinct()
 
     def annotate_is_muted(self, user):
-        return self.annotate(is_muted=Exists(Room.objects.filter(muted_by=user, id=OuterRef("id"),)))
+        return self.annotate(
+            is_muted=Exists(
+                Room.objects.filter(
+                    muted_by=user,
+                    id=OuterRef("id"),
+                )
+            )
+        )
 
     def annotate_message_count(self, user=None):
         return self.annotate(
@@ -31,7 +44,9 @@ class Room(TimeStampedModel):
         return f"images/room/{self.id}/{filename}"
 
     user_attribute = "creator"
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="rooms_creator_set")
+    creator = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="rooms_creator_set"
+    )
     title = models.CharField(max_length=512)
     description = models.TextField(default="", blank=True)
     image = models.ImageField(upload_to=get_upload_to, null=True, blank=True)
