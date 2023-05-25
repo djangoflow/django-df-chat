@@ -86,6 +86,21 @@ To run a chat example you need:
 pytest
 ```
 
+### Contribution
+
+Make sure you've run the following commands to setup the environment for development:
+  ```bash
+  # Setup the python virtual environment
+  python3 -m venv venv
+  . venv/bin/activate
+  pip install -r requirements.txt
+  pip install -r requirements-dev.txt
+
+  # Run pre-commit install to install pre-commit into your git hooks.
+  # It will run on every commit and fail to commit if the code is not as per standards defined in .pre-commit-config.yaml
+  pre-commit install
+  ```
+
 
 ### Deploying new version
 

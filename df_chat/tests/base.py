@@ -1,11 +1,14 @@
 from channels.db import database_sync_to_async
 from df_chat.models import Room
-from df_chat.models import User
 from df_chat.tests.utils import RoomFactory
 from df_chat.tests.utils import TEST_USER_PASSWORD
 from df_chat.tests.utils import UserFactory
+from django.contrib.auth import get_user_model
 from rest_framework.reverse import reverse
 from typing import Tuple
+
+
+User = get_user_model()
 
 
 class BaseTestUtilsMixin:
