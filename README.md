@@ -24,7 +24,7 @@ Opinionated Django Chat
 
 > **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
 
-The Django REST Framework (DRF) is used to build the API for `django-df-chat`. DRF routers are used to automatically create routes for the API views. There are two top-level routes: `rooms` and `images`, and two nested routes under `rooms`: `users` and `messages`.
+The [Django REST Framework (DRF)](https://www.django-rest-framework.org/) is used to build the API for `django-df-chat`. DRF routers are used to automatically create routes for the API views. There are two top-level routes: `rooms` and `images`, and two nested routes under `rooms`: `users` and `messages`.
 
 Below are the endpoints provided by `django-df-chat`:
 
@@ -66,6 +66,29 @@ Below are the endpoints provided by `django-df-chat`:
 
 Note that all these endpoints require the client to be authenticated, and permissions are checked on each request to ensure the client is allowed to perform the requested action.
 
+## Websocket Endpoint
+
+> **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
+
+`django-df-chat` also provides a websocket endpoint for real-time chat functionality. This uses [Django Channels](https://channels.readthedocs.io/en/stable/) and the [DjangoChannelsRestFramework](https://djangochannelsrestframework.readthedocs.io/en/latest/) package to provide a consumer that listens for chat events.
+
+### Rooms Consumer
+
+A single websocket consumer is defined for listening to chat events: `RoomsConsumer`.
+
+- Websocket connect to `/api/v1/chat/ws/` - Connects the client to the server via a websocket. If the user is not authenticated, the connection is refused. On connection, the user is automatically subscribed to all the rooms they are a part of.
+
+- Websocket disconnect - The user disconnects from the websocket. On disconnection, the user is automatically unsubscribed from all rooms they are listening to. The `user_chat` model is updated to reflect that the user is offline.
+
+The `RoomsConsumer` listens for changes to `RoomUser` and `Message` models, and sends updates to the client via the websocket when these models change. These updates include both changes made by the client themselves and changes made by other users. Therefore, clients using this websocket endpoint will receive real-time updates about all chat events they are allowed to know about.
+
+- `RoomUser` updates: When a `RoomUser` model is changed (which represents a user joining or leaving a room), the websocket client will receive an update with the new state of the `RoomUser`.
+
+- `Message` updates: When a `Message` model is created or updated, the websocket client will receive an update with the new state of the `Message`.
+
+Note that the server will not send updates for empty messages and reactions, nor for `Message` instances marked as "reactions." This means that the websocket client will only receive updates for substantial chat events.
+
+Please note that for proper functioning of these real-time features, it's crucial that the WebSocket client correctly implements handling of incoming updates and adjust their state accordingly.
 
 ## Data model
 
