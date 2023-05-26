@@ -56,7 +56,32 @@ These models, their relationships, and attributes allow for robust representatio
 
 ## Views and templates
 
-...
+There's a Django view for each URL path, and each view is associated with a corresponding HTML template.
+
+### Index View
+
+The index view (at the `/` URL path) corresponds to the `index.html` template. This view and template allow users to choose a chat room to enter.
+
+The `index.html` template presents a simple interface for entering a room name, and then navigates to the corresponding room URL when the "Enter" button is clicked. It uses JavaScript to enable this functionality and to respond to the Enter key being pressed.
+
+### Room View
+
+The room view (at the `/<str:room_name>/` URL path) corresponds to the `room.html` template. This view and template allow users to chat in the chosen room.
+
+The `room.html` template provides a chat interface for a specific room. It includes a `textarea` for displaying chat messages, an `input` field for writing a new message, and two buttons for sending the message or a reaction.
+
+The template also includes JavaScript code that does the following:
+
+- Extracts the room name from the rendered Django template, and the auth token from the URL.
+- Establishes a WebSocket connection for real-time chat functionality.
+- Adds messages to the chat log when they're received over the WebSocket.
+- Sends new messages and reactions to the server when the "Send" or "Like" button is clicked. These are sent via HTTP POST requests to a REST API endpoint, not via the WebSocket. The messages or reactions are sent as JSON payloads, and the server's responses are added to the chat log.
+
+### How to Use These Views and Templates
+
+To use these views and templates in your Django project, simply map the views to their respective URL paths in your project's URL configuration, and place the templates in your project's templates directory under the appropriate app subdirectory.
+
+Remember to ensure that the WebSocket and REST API endpoints referenced in the `room.html` template are correctly set up in your project, and that you have CSRF protection and authentication set up for the POST requests.
 
 ## Development
 
