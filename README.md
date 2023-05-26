@@ -4,7 +4,25 @@ Opinionated Django Chat
 
 ## Design
 
-...
+> **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
+
+The `django-df-chat` project is a modern, scalable, and feature-rich chat application backend built with [Django](https://www.djangoproject.com/). It uses the [Django Rest Framework (DRF)](https://www.django-rest-framework.org/) and [Django Channels](https://channels.readthedocs.io/en/latest/) to provide a comprehensive set of HTTP and WebSocket APIs for all needed chat functionalities.
+
+Here are the key design decisions and architectural components of the project:
+
+1. **[Django Rest Framework (DRF)](https://www.django-rest-framework.org/):** This project leverages DRF to construct the HTTP APIs for managing chat-related resources like rooms, messages, and users. DRF's `ModelViewSet` and `NestedSimpleRouter` enable easy creation, retrieval, update, and deletion of these resources, with support for complex nesting of routes.
+
+2. **[Django Channels](https://channels.readthedocs.io/en/latest/) and [DjangoChannelsRestFramework](https://channels.readthedocs.io/en/stable/):** For real-time chat capabilities, the project utilizes Django Channels with DjangoChannelsRestFramework to provide WebSocket APIs. Using the observer pattern, it sends out real-time updates whenever `Message` and `RoomUser` models are updated. This allows users to receive instant notifications of messages and changes in the chat room participants.
+
+3. **[Redis](https://redis.io/):** Redis is used as the channel layer for Django Channels, providing the backbone for WebSocket communication. It is required for Django Channels to manage and route the WebSocket connections and messages.
+
+4. **Database Design:** The project uses a relational database design, leveraging Django's ORM capabilities. The main models include `Room`, `RoomUser`, `Message`, and `MessageImage`. `Room` represents a chat room, `RoomUser` maps users to their rooms, `Message` encapsulates a user's message within a room, and `MessageImage` is used for images associated with a message.
+
+5. **Permissions:** The project carefully handles permissions using [DRF's permission classes](https://www.django-rest-framework.org/api-guide/permissions/). Custom permission `IsOwnerOrReadOnly` is used to ensure users can only modify their own data, maintaining the security and integrity of the application.
+
+6. **Pagination:** In order to keep the API responses manageable and improve performance, the application uses [pagination](https://www.django-rest-framework.org/api-guide/pagination/). This is particularly important for endpoints that can return a large number of resources, such as the list of messages in a chat room.
+
+The design of `django-df-chat` follows best practices for building scalable, efficient, and robust web applications with Django. It ensures a solid foundation for any chat application, providing both the flexibility of HTTP APIs and the real-time capabilities of WebSocket APIs.
 
 ## Principles
 
