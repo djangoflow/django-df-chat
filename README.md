@@ -2,11 +2,44 @@
 
 Opinionated Django Chat
 
+## Requirements
+
+> **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
+
+Before integrating `django-df-chat` into your Django project, ensure that the following prerequisites are met:
+
+#. **[Python](https://www.python.org/)**: This project requires Python 3.8 or newer.
+#. **[Django](https://www.djangoproject.com/)**: Django version 3.2 or newer is required.
+#. **[DjangoFlow](https://github.com/djangoflow)**: Django Flow, our base project with integrated CI/CD, is a recommended starting point for incorporating `django-df-chat`.
+#. **[Django REST Framework](https://www.django-rest-framework.org/)**: This project makes use of Django REST Framework for building APIs.
+#. **[Django Channels](https://channels.readthedocs.io/en/latest/)**: This is needed for handling WebSockets and facilitating real-time communication.
+#. **[Django Channels REST Framework](https://github.com/hishnash/djangochannelsrestframework)**: A library for building WebSocket API.
+#. **[DRF Spectacular](https://drf-spectacular.readthedocs.io/en/latest/)**: A Django REST framework schema generation tool.
+#. **[Django Hashid Field](https://github.com/nshafer/django-hashid-field)**: A reusable Django field that hides the fact that you're using AutoField or IntegerField primary keys in your objects.
+#. **[DRF Nested Routers](https://github.com/alanjds/drf-nested-routers)**: This is used for managing CRUD operations on nested routes.
+#. **[Django REST Framework SimpleJWT](https://django-rest-framework-simplejwt.readthedocs.io/en/latest/)**: This is used for authentication using JSON Web Tokens.
+#. **[PyJWT](https://pyjwt.readthedocs.io/en/latest/)**: A Python library which allows you to encode and decode JSON Web Tokens (JWT).
+#. **[Django Model Utils](https://django-model-utils.readthedocs.io/en/latest/)**: This project uses Django Model Utils for model mixins and utilities.
+#. **[Django DF Notifications](https://github.com/dfurtado/django-notifications)**: This is used for managing user notifications in Django.
+#. **[Pillow](https://pillow.readthedocs.io/en/stable/)**: A Python Imaging Library for opening, manipulating, and saving many different image file formats.
+#. **[FCM Django](https://github.com/xtrinch/fcm-django)**: A library to send push notifications to mobile devices using Firebase Cloud Messaging.
+#. **[Redis](https://redis.io/)**: Django Channels uses Redis as a backend for message passing in the WebSocket layer.
+
+These requirements are also mentioned in the `requirements.txt` and `requirements-dev.txt` files for quick installation via pip.
+
+Please ensure that your environment meets these requirements before you proceed with the integration of `django-df-chat` into your project.
+
 ## Design
 
 > **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
 
-The `django-df-chat` project is a modern, scalable, and feature-rich chat application backend built with [Django](https://www.djangoproject.com/). It uses the [Django Rest Framework (DRF)](https://www.django-rest-framework.org/) and [Django Channels](https://channels.readthedocs.io/en/latest/) to provide a comprehensive set of HTTP and WebSocket APIs for all needed chat functionalities.
+
+The `django-df-chat` application follows a robust and efficient design that leverages the power of several Django libraries and tools to facilitate the building of a scalable and feature-rich chat application. It's built on top of [DjangoFlow](https://github.com/djangoflow), our base project with integrated CI/CD.
+
+Major elements of the design include:
+
+- **Django REST Framework (DRF)**: Used for the creation of the API endpoints.
+- **Django Channels**: Utilized for handling WebSockets
 
 Here are the key design decisions and architectural components of the project:
 
