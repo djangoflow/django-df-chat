@@ -219,7 +219,45 @@ pip install -r requirements.txt
 ./manage.py runserver
 ```
 
-Absolutely, this additional information could be useful for developers to understand the optimal way of integrating Django ASGI application and WebSocket routing for chat into their existing Django project.
+To run a chat example you need:
+
+- Create two superusers via `./manage.py createsuperuser`
+- Open http://127.0.0.1:8000/api/v1/auth/token/ and obtain a `token`  by submitting username and password.
+- Create chat room via admin http://127.0.0.1:8000/admin/df_chat/room/ and obtain `room_id` from URL
+- Open http://localhost:8000/v1/chat/<room_id>/?token=<token> in two different browsers
+- Start chatting. You should see messages appear in both browsers
+
+### Running tests
+
+```
+pytest
+```
+
+### Contribution
+
+Make sure you've run the following commands to setup the environment for development:
+  ```bash
+  # Setup the python virtual environment
+  python3 -m venv venv
+  . venv/bin/activate
+  pip install -r requirements.txt
+  pip install -r requirements-dev.txt
+
+  # Run pre-commit install to install pre-commit into your git hooks.
+  # It will run on every commit and fail to commit if the code is not as per standards defined in .pre-commit-config.yaml
+  pre-commit install
+  ```
+
+
+### Deploying new version
+
+Change version in `setup.cfg` and push new tag to main branch.
+
+```
+git tag 0.0.x
+git push --tags
+```
+
 
 ## Project Integration
 
@@ -324,3 +362,6 @@ This `django-df-chat` backend can be seamlessly integrated into your Django proj
 
 Remember to replace 'myproject' and 'localhost:8000' with your project name and your server's IP address respectively. This guide assumes that Redis is running on 'localhost' port '6379'. Please update the values as per your Redis configuration.
 
+## Sponsors
+
+[Apexive OSS](https://apexive.com)
