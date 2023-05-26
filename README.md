@@ -27,7 +27,7 @@ Opinionated Django Chat
 
 ## Data model
 
-...
+![Model graph](docs/models_graph.png)
 
 ## Views and templates
 
