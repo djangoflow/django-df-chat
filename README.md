@@ -22,12 +22,56 @@ Opinionated Django Chat
 
 ## Endpoints
 
-* `chat/`
-# TODO: specify endpoints
+> **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
+
+The Django REST Framework (DRF) is used to build the API for `django-df-chat`. DRF routers are used to automatically create routes for the API views. There are two top-level routes: `rooms` and `images`, and two nested routes under `rooms`: `users` and `messages`.
+
+Below are the endpoints provided by `django-df-chat`:
+
+### Rooms
+
+- `GET /api/v1/chat/rooms/` - List all chat rooms that the authenticated user can access.
+- `POST /api/v1/chat/rooms/` - Create a new chat room.
+- `GET /api/v1/chat/rooms/<room_id>/` - Retrieve details of a specific chat room.
+- `PUT /api/v1/chat/rooms/<room_id>/` - Update details of a specific chat room.
+- `DELETE /api/v1/chat/rooms/<room_id>/` - Delete a specific chat room.
+- `POST /api/v1/chat/rooms/<room_id>/mute/` - Mute a specific chat room for the authenticated user.
+- `POST /api/v1/chat/rooms/<room_id>/unmute/` - Unmute a specific chat room for the authenticated user.
+
+### Users in a Room
+
+- `GET /api/v1/chat/rooms/<room_id>/users/` - List all users in a specific room.
+- `POST /api/v1/chat/rooms/<room_id>/users/` - Add a user to a specific room.
+- `GET /api/v1/chat/rooms/<room_id>/users/<user_id>/` - Retrieve details of a specific user in a room.
+- `PUT /api/v1/chat/rooms/<room_id>/users/<user_id>/` - Update details of a specific user in a room.
+- `DELETE /api/v1/chat/rooms/<room_id>/users/<user_id>/` - Remove a specific user from a room.
+- `GET /api/v1/chat/rooms/<room_id>/users/names/` - Get the names of all users in a specific room.
+
+### Messages in a Room
+
+- `GET /api/v1/chat/rooms/<room_id>/messages/` - List all messages in a specific room.
+- `POST /api/v1/chat/rooms/<room_id>/messages/` - Send a new message in a specific room.
+- `GET /api/v1/chat/rooms/<room_id>/messages/<message_id>/` - Retrieve details of a specific message in a room.
+- `PUT /api/v1/chat/rooms/<room_id>/messages/<message_id>/` - Update a specific message in a room.
+- `DELETE /api/v1/chat/rooms/<room_id>/messages/<message_id>/` - Delete a specific message from a room.
+- `POST /api/v1/chat/rooms/<room_id>/messages/seen/` - Mark a message as seen by the authenticated user.
+
+### Images
+
+- `GET /api/v1/chat/images/` - List all images that the authenticated user can access.
+- `POST /api/v1/chat/images/` - Upload a new image.
+- `GET /api/v1/chat/images/<image_id>/` - Retrieve details of a specific image.
+- `PUT /api/v1/chat/images/<image_id>/` - Update details of a specific image.
+- `DELETE /api/v1/chat/images/<image_id>/` - Delete a specific image.
+
+Note that all these endpoints require the client to be authenticated, and permissions are checked on each request to ensure the client is allowed to perform the requested action.
+
 
 ## Data model
 
 ![Model graph](docs/models_graph.png)
+
+> **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
 
 The data models in `django-df-chat` represent the main entities in the chat system: Messages, Images, Rooms, Room Users, and User Chat.
 
@@ -55,6 +99,8 @@ These models, their relationships, and attributes allow for robust representatio
 
 
 ## Views and templates
+
+> **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
 
 There's a Django view for each URL path, and each view is associated with a corresponding HTML template.
 
