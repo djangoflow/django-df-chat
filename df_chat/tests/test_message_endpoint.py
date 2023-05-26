@@ -1,5 +1,5 @@
 from datetime import datetime
-from datetime import timedelta
+from df_chat.models import Message
 from df_chat.models import RoomUser
 from df_chat.tests.base import BaseTestUtilsMixin
 from django.urls import reverse
@@ -13,17 +13,18 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
     Testing the RESTful API messages endpoint
     """
 
-    def test_message_creation_success(self):
+    def __message_endpoint(self, room_pk):
+        return reverse("rooms-messages-list", kwargs={"room_pk": room_pk})
+
+    def test_message_creation_success(self, body="hi"):
         """
         Testing creation of a message using the messages endpoint.
         """
         user, token = self.create_user()
         room = self.create_room_and_add_users(user)
 
-        message_endpoint = reverse("rooms-messages-list", kwargs={"room_pk": room.pk})
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token)
-        body = "Test message 1234."
-        response = self.client.post(message_endpoint, {"body": body})
+        response = self.client.post(self.__message_endpoint(room.pk), {"body": body})
         message = response.json()
 
         room_user = user.roomuser_set.get()
@@ -40,10 +41,7 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
         """
         Test-case for filtering messages by the `Message` model's `body` field.
         """
-        _, room = self.test_message_creation_success()
-        messages_list_endpoint = reverse(
-            "rooms-messages-list", kwargs={"room_pk": room.pk}
-        )
+        _, room = self.test_message_creation_success(body="Test message 1234.")
 
         for body in [
             "Test message 1234.",
@@ -54,109 +52,143 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
             "message",
             "1234",
         ]:
-            messages_list_response = self.client.get(
-                messages_list_endpoint,
+            response = self.client.get(
+                self.__message_endpoint(room.pk),
                 {"body": body},
             )
-            # Assert the correct HTTP status code for response.
-            self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-            # Assert the response body contains the keyword.
-            self.assertIn(
-                body.lower(), messages_list_response.json()[0]["body"].lower()
-            )
+            self.assertEqual(response.status_code, http.HTTPStatus.OK)
+            self.assertIn(body.lower(), response.json()[0]["body"].lower())
 
         for body in [
             "somethingrandom",
             "messages",
             "124",
         ]:
-            messages_list_response = self.client.get(
-                messages_list_endpoint,
+            response = self.client.get(
+                self.__message_endpoint(room.pk),
                 {"body": body},
             )
-            # Assert the correct HTTP status code for response.
-            self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-            # Assert the response is an empty list.
-            self.assertEqual(messages_list_response.json(), [])
+            self.assertEqual(response.status_code, http.HTTPStatus.OK)
+            self.assertEqual(response.json(), [])
 
     def test_filter_message_by_username(self):
         """
         Test-case for filtering messages by the `Message` model's related `User`'s `username` field.
         """
         user, room = self.test_message_creation_success()
-        messages_list_endpoint = reverse(
-            "rooms-messages-list", kwargs={"room_pk": room.pk}
-        )
 
-        messages_list_response = self.client.get(
-            messages_list_endpoint,
+        response = self.client.get(
+            self.__message_endpoint(room.pk),
             {"username": user.username},
         )
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-        # Assert the message `room_user_id` matches the `id` field of the `RoomUser` object
-        #   corresponding to the user.
+        self.assertEqual(response.status_code, http.HTTPStatus.OK)
         room_user_obj = RoomUser.objects.get(user__id=user.id)
-        self.assertEqual(
-            messages_list_response.json()[0]["room_user_id"], room_user_obj.id
-        )
+        self.assertEqual(response.json()[0]["room_user_id"], room_user_obj.id)
 
-        messages_list_response = self.client.get(
-            messages_list_endpoint,
+        response = self.client.get(
+            self.__message_endpoint(room.pk),
             {"username": "invalid_username"},
         )
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-        # Assert the response is an empty list.
-        self.assertEqual(messages_list_response.json(), [])
+        self.assertEqual(response.status_code, http.HTTPStatus.OK)
+        self.assertEqual(response.json(), [])
 
     def test_filter_message_by_date_range(self):
         """
         Test-case for filtering messages by the `Message` model's `created` field.
+        What we should see in these cases:
+            1. Before `timestamp_0` ~> count = 0
+            2. After `timestamp_0` ~> count = 3
+            3. Between each timestamp ~> count = 1
+            4. Before `timestamp_3` ~> count = 3
+            5. After `timestamp_3` ~> count = 0
         """
-        user, room = self.test_message_creation_success()
-        messages_list_endpoint = reverse(
-            "rooms-messages-list", kwargs={"room_pk": room.pk}
-        )
-
-        now = datetime.now()
-        before = now - timedelta(hours=1)
         datetime_format = "%Y-%m-%dT%H:%M:%S.%f"
 
-        messages_list_response = self.client.get(
-            messages_list_endpoint,
-            {"created_gte": str(before)},
+        timestamp_0 = datetime.now()
+        user, room = self.test_message_creation_success()
+        timestamp_1 = datetime.now()
+        Message.objects.create(
+            room_user=RoomUser.objects.get(user=user, room=room),
+            body="hi",
         )
-        message_created = datetime.strptime(
-            messages_list_response.json()[0]["created"], datetime_format
+        timestamp_2 = datetime.now()
+        Message.objects.create(
+            room_user=RoomUser.objects.get(user=user, room=room),
+            body="hi",
         )
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-        # Assert message `created` datetime is larger than `before` datetime.
-        self.assertTrue(message_created >= before)
+        timestamp_3 = datetime.now()
 
-        # * datetime range search - range end
-        messages_list_response = self.client.get(
-            messages_list_endpoint,
-            {"created_lte": str(now)},
+        # * 1
+        response = self.client.get(
+            self.__message_endpoint(room.pk),
+            {"created_lte": str(timestamp_0)},
         )
-        message_created = datetime.strptime(
-            messages_list_response.json()[0]["created"], datetime_format
-        )
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-        # Assert message `created` datetime is smaller than `now` datetime.
-        self.assertTrue(message_created <= now)
+        self.assertEqual(response.status_code, http.HTTPStatus.OK)
+        self.assertEqual(len(response.json()), 0)
 
-        # * datetime range search - now results
-        messages_list_response = self.client.get(
-            messages_list_endpoint,
-            {"created_lte": str(before)},
+        # * 2
+        response = self.client.get(
+            self.__message_endpoint(room.pk),
+            {"created_gte": str(timestamp_0)},
         )
-        # Assert the correct HTTP status code for response.
-        self.assertEqual(messages_list_response.status_code, http.HTTPStatus.OK)
-        # Assert no  messages are created after `before` time.
-        self.assertEqual(messages_list_response.json(), [])
+        self.assertEqual(response.status_code, http.HTTPStatus.OK)
+        self.assertEqual(len(response.json()), 3)
+        # To assert the `created` of all messages are indeed larger than `timestamp_0`.
+        self.assertTrue(
+            all(
+                created >= timestamp_0
+                for created in [
+                    datetime.strptime(message["created"], datetime_format)
+                    for message in response.json()
+                ]
+            )
+        )
+
+        # * 3
+        for datetime_range in [
+            (timestamp_0, timestamp_1),
+            (timestamp_1, timestamp_2),
+            (timestamp_2, timestamp_3),
+        ]:
+            response = self.client.get(
+                self.__message_endpoint(room.pk),
+                {
+                    "created_gte": str(datetime_range[0]),
+                    "created_lte": str(datetime_range[1]),
+                },
+            )
+            message_created = datetime.strptime(
+                response.json()[0]["created"], datetime_format
+            )
+            self.assertEqual(response.status_code, http.HTTPStatus.OK)
+            self.assertEqual(len(response.json()), 1)
+            self.assertTrue(datetime_range[0] <= message_created <= datetime_range[1])
+
+        # * 4
+        response = self.client.get(
+            self.__message_endpoint(room.pk),
+            {"created_lte": str(timestamp_3)},
+        )
+        self.assertEqual(response.status_code, http.HTTPStatus.OK)
+        self.assertEqual(len(response.json()), 3)
+        # To assert the `created` of all messages are indeed smaller than `timestamp_3`.
+        self.assertTrue(
+            all(
+                created <= timestamp_3
+                for created in [
+                    datetime.strptime(message["created"], datetime_format)
+                    for message in response.json()
+                ]
+            )
+        )
+
+        # * 5
+        response = self.client.get(
+            self.__message_endpoint(room.pk),
+            {"created_gte": str(timestamp_3)},
+        )
+        self.assertEqual(response.status_code, http.HTTPStatus.OK)
+        self.assertEqual(len(response.json()), 0)
 
     # TODOS: We should also implement the following tests:
     # - Fail to create a message when the user is not authenticated.

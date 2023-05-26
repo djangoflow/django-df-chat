@@ -14,7 +14,7 @@ class MessageFilter(filters.FilterSet):
         field_name="room_user__user__username", lookup_expr="contains"
     )
 
-    body = filters.CharFilter(field_name="body", lookup_expr="contains")
+    body = filters.CharFilter(field_name="body", lookup_expr="icontains")
 
     class Meta:
         model = Message
