@@ -172,6 +172,8 @@ Remember to ensure that the WebSocket and REST API endpoints referenced in the `
 
 ## Development
 
+The project follows the standard Python project structure and includes `pyproject.toml` and `setup.cfg` configuration files. You may need to adjust these configurations according to the requirements of your project. Also, note that the project is setup to use [flake8](https://flake8.pycqa.org/en/latest/) for style guide enforcement, [Black](https://black.readthedocs.io/en/stable/) for code formatting, and [isort](https
+
 ### Running test application.
 
 Here you can check admin and API endpoints.
@@ -182,3 +184,110 @@ python3 -m venv venv
 pip install -r requirements.txt
 ./manage.py migrate
 ./manage.py runserver
+```
+
+Absolutely, this additional information could be useful for developers to understand the optimal way of integrating Django ASGI application and WebSocket routing for chat into their existing Django project.
+
+## Project Integration
+
+> **_NOTE:_**  Generated content, as with human generated content, may contain errors or oversights. Please review before merging!
+
+This `django-df-chat` backend can be seamlessly integrated into your Django project with the following steps:
+
+### Prerequisites
+1. This project has a few dependencies which are listed in the `requirements.txt` and `requirements-dev.txt` files. You can install these dependencies using pip:
+
+    ```
+    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
+    ```
+
+2. Make sure you have Redis installed and running as per the [official guide](https://redis.io/topics/quickstart). Django Channels uses Redis as its default channel layer backend.
+
+### Steps to integrate django-df-chat
+
+1. **Add 'df_chat' to your INSTALLED_APPS**
+
+    ```python
+    INSTALLED_APPS = [
+        ...,
+        'df_chat',
+        ...
+    ]
+    ```
+
+2. **Include the 'df_chat' URLs in your project urls.py**
+
+    ```python
+    from django.urls import include, path
+
+    urlpatterns = [
+        ...,
+        path('api/v1/chat/', include('df_chat.drf.urls')),
+        path('chat/', include('df_chat.urls')),
+        ...
+    ]
+    ```
+
+3. **Run migrations to create the chat models in your database**
+
+    ```
+    python manage.py makemigrations
+    python manage.py migrate
+    ```
+
+4. **Configure Django Channels and ASGI**
+
+    Add the following configuration to your Django settings:
+
+    ```python
+    ASGI_APPLICATION = 'myproject.asgi.application'
+
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [("localhost", 6379)],  # point to your redis server
+            },
+        },
+    }
+    ```
+
+    Create a `asgi.py` file in your project directory (same level as `settings.py`):
+
+    ```python
+    from channels.routing import ProtocolTypeRouter, URLRouter
+    from django.core.asgi import get_asgi_application
+    import df_chat.asgi.urls
+    import df_chat.middleware
+
+    application = ProtocolTypeRouter(
+        {
+            "http": get_asgi_application(),
+            "websocket": df_chat.middleware.JWTAuthMiddlewareStack(URLRouter(df_chat.asgi.urls.urlpatterns)),
+        }
+    )
+    ```
+
+    For WebSocket routing, create an `async_router.py` file:
+
+    ```python
+    from channels.routing import URLRouter
+    from df_chat.asgi.urls import urlpatterns
+    from django.urls import path
+
+    urlpatterns = [path("ws/chat", URLRouter(urlpatterns))]
+    ```
+
+5. **Start the Django development server**
+
+    ```
+    python manage.py runserver
+    ```
+
+6. **Test the application**
+
+    Visit `http://localhost:8000/chat/rooms/` to start using the chat application.
+
+Remember to replace 'myproject' and 'localhost:8000' with your project name and your server's IP address respectively. This guide assumes that Redis is running on 'localhost' port '6379'. Please update the values as per your Redis configuration.
+
