@@ -1,122 +1,47 @@
-=======================================
-Djangoflow Chat
-=======================================
+# Djangoflow Chat
 
 Opinionated Django Chat
 
-
-
-
-
-------
-Design
-------
+## Design
 
 ...
 
-Principles
-----------
+## Principles
 
-* **Opinionated:** Create a set of strict guidelines to be followed by the users
-  and developers. Well defined and consistent guidelines reduces errors and
-  unwanted side-effects. Framework should be easy to understand, implement and maintain.
+* **Opinionated:** Create a set of strict guidelines to be followed by the users and developers. Well defined and consistent guidelines reduce errors and unwanted side-effects. The framework should be easy to understand, implement, and maintain.
 
-* **Secure:** Follow the industry best practices secure software development; communications;
-  storage as well as long term maintenance. Always evaluate the risk and trade-offs in
-  appropriate contexts.
+* **Secure:** Follow the industry best practices for secure software development, communications, storage, as well as long-term maintenance. Always evaluate the risks and trade-offs in appropriate contexts.
 
-* **Clean code:** Strictly follow DRY principle; write your code for other developers
-  to understand; document and keep documentation updated; automate testing your code,
-  packaging, deployments and other processes; discuss your ideas before implementing unless
-  you are absolutely sure; be a good craftsmen.
+* **Clean code:** Strictly follow the DRY (Don't Repeat Yourself) principle; write your code for other developers to understand; document and keep the documentation updated; automate testing your code, packaging, deployments, and other processes; discuss your ideas before implementing unless you are absolutely sure; be a good craftsman.
 
-* **Open:** Offer source code and related artifacts under open source licenses. Build
-  and manage a collaborative community where everyone is welcome.
+* **Open:** Offer source code and related artifacts under open source licenses. Build and manage a collaborative community where everyone is welcome.
 
-* **Configurable:** Provide ways to change behavior, appearance and offer extension points
-  everywhere possible.
+* **Configurable:** Provide ways to change behavior, appearance, and offer extension points everywhere possible.
 
 * **Reuse:** Do not reinvent the wheel. Use existing high-quality modules as much as possible.
 
-Endpoints
----------
+## Endpoints
 
 * `chat/`
 # TODO: specify endpoints
 
-Data model
-----------
+## Data model
 
 ...
 
-Views and templates
--------------------
+## Views and templates
 
 ...
-
 
 ## Development
-
 
 ### Running test application.
 
 Here you can check admin and API endpoints.
 
-```
+```bash
 python3 -m venv venv
 . venv/bin/activate
 pip install -r requirements.txt
 ./manage.py migrate
 ./manage.py runserver
-```
-
-
-To run a chat example you need:
-
-- Create two superusers via `./manage.py createsuperuser`
-- Open http://127.0.0.1:8000/api/auth/token/ and obtain a `token` for each user with username and password
-- Create chat room via admin http://127.0.0.1:8000/admin/df_chat/room/ and obtain `room_id` from URL
-- Open http://localhost:8000/chat/<room_id>/?token=<token> in two different browsers
-- Start chatting. You should see messages appear in both browsers
-
-
-### Running tests
-
-```
-pytest
-```
-
-### Contribution
-
-Make sure you've run the following commands to setup the environment for development:
-  ```bash
-  # Setup the python virtual environment
-  python3 -m venv venv
-  . venv/bin/activate
-  pip install -r requirements.txt
-  pip install -r requirements-dev.txt
-
-  # Run pre-commit install to install pre-commit into your git hooks.
-  # It will run on every commit and fail to commit if the code is not as per standards defined in .pre-commit-config.yaml
-  pre-commit install
-  ```
-
-
-### Deploying new version
-
-Change version in `setup.cfg` and push new tag to main branch.
-
-```
-git tag 0.0.x
-git push --tags
-```
-
-## Other modules and links out there
-
-
-...
-
-Sponsors
-========
-
-[Apexive OSS](https://apexive.com)
