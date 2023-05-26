@@ -222,9 +222,9 @@ pip install -r requirements.txt
 To run a chat example you need:
 
 - Create two superusers via `./manage.py createsuperuser`
-- Open http://127.0.0.1:8000/api/v1/auth/token/ and obtain a `token`  by submitting username and password.
-- Create chat room via admin http://127.0.0.1:8000/admin/df_chat/room/ and obtain `room_id` from URL
-- Open http://localhost:8000/v1/chat/<room_id>/?token=<token> in two different browsers
+- Open `http://127.0.0.1:8000/api/v1/auth/token/` and obtain a `token`  by submitting username and password.
+- Create chat room via admin `http://127.0.0.1:8000/admin/df_chat/room/` and obtain `room_id` from URL
+- Open `http://localhost:8000/v1/chat/<room_id>/?token=<token>` in two different browsers
 - Start chatting. You should see messages appear in both browsers
 
 ### Running tests
