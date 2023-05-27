@@ -13,7 +13,7 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
         Testing creation of a message using the messages endpoint.
         """
         user, token = self.create_user()
-        room = self.create_room_and_add_users(user)
+        room = self.create_room_and_add_users(True, user)
 
         message_endpoint = reverse("rooms-messages-list", kwargs={"room_pk": room.pk})
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token)
@@ -31,7 +31,7 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
         """
         Testing failure to create a message when the user is not authenticated.
         """
-        room = self.create_room_and_add_users()
+        room = self.create_room_and_add_users(True)
 
         message_endpoint = reverse("rooms-messages-list", kwargs={"room_pk": room.pk})
         response = self.client.post(message_endpoint, {"body": "Hi"})
@@ -42,12 +42,12 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
         Testing failure to create a message when the user is not part of a room.
         """
         user, token = self.create_user()
-        room = self.create_room_and_add_users()
+        room = self.create_room_and_add_users(False)
 
         message_endpoint = reverse("rooms-messages-list", kwargs={"room_pk": room.pk})
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token)
         response = self.client.post(message_endpoint, {"body": "Hi"})
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 404)
 
     def test_message_creation_failure_room_not_found(self):
         """
@@ -62,9 +62,3 @@ class TestMessageEndpoint(APITestCase, BaseTestUtilsMixin):
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token)
         response = self.client.post(message_endpoint, {"body": "Hi"})
         self.assertEqual(response.status_code, 404)
-
-    # TODOS: We should also implement the following tests:
-    # - Fail to create a message when the user is not authenticated.
-    # - Ensure that the endpoint returns a 404 error
-    #   - if the user is not part of a Room
-    #   - if a room doesn't exist at all.

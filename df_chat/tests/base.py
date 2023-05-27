@@ -26,11 +26,11 @@ class BaseTestUtilsMixin:
         token = response.json()["token"]
         return user, token
 
-    def create_room_and_add_users(self, *users) -> Room:
+    def create_room_and_add_users(self, ispublic, *users) -> Room:
         """
         Creates a Room object and adds the users to it.
         """
-        room = RoomFactory()
+        room = RoomFactory(is_public=ispublic)
         room.users.set(users)
         return room
 
