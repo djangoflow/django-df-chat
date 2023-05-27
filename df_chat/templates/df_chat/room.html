@@ -6,10 +6,13 @@
     <title>Chat Room</title>
 </head>
 <body>
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
+    <div id="chat-log">
+    </div>
+    <br>
     <input id="chat-message-input" type="text" size="100"><br>
     <input id="chat-message-submit" type="button" value="Send">
     <input id="chat-reaction-submit" type="button" value="Like">
+    <input id="chat-pin-submit" type="button" value="Pin">
     {{ room_name|json_script:"room-name" }}
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -24,11 +27,32 @@
             + location.search
         );
 
-
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (JSON.stringify(data) + '\n');
+            const messageLog = document.querySelector('#chat-log');
+            const messageData = JSON.stringify(data) + '\n';
+
+            if (data.messages.length > 0) {
+                const message = data.messages[0];
+                const pinnedMessageId = message.parent_id;
+
+                if (pinnedMessageId) {
+                const pinnedMessageElement = messageLog.querySelector(`[data-message-id="${pinnedMessageId}"]`);
+
+                if (pinnedMessageElement) {
+                    // Move the pinned message to the top of the log
+                    messageLog.prepend(pinnedMessageElement);
+                }
+                }
+            }
+
+            // Append the current message data to the chat log
+            const messageElement = document.createElement('div');
+            messageElement.setAttribute('data-message-id', data.messages[0].id);
+            messageElement.textContent = messageData;
+            messageLog.appendChild(messageElement);
         };
+
 
         chatSocket.onclose = function(e) {
             console.log(e)
@@ -76,6 +100,24 @@
             })
 
             messageInputDom.value = '';
+        };
+
+        document.querySelector('#chat-pin-submit').onclick = function(e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+
+        fetch(`/api/v1/chat/rooms/${roomName}/messages/`, {
+            method: 'POST',
+            headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+            'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ body: '+', parent_id: message, is_pinned: true })
+        });
+
+        messageInputDom.value = '';
         };
     </script>
 </body>

@@ -129,6 +129,7 @@ class MessageSerializer(serializers.ModelSerializer):
     is_me = serializers.SerializerMethodField()
     is_seen_by_me = serializers.BooleanField(read_only=True)
     is_reaction = serializers.BooleanField(default=False)
+    is_pinned = serializers.BooleanField(default=False)
     images = MessageImageSerializer(many=True, read_only=True)
     reactions = serializers.ListSerializer(child=RecursiveField(), read_only=True)
 
@@ -161,7 +162,7 @@ class MessageSerializer(serializers.ModelSerializer):
             "images",
             "reactions",
         )
-        fields = read_only_fields + ("body", "parent_id", "is_reaction")
+        fields = read_only_fields + ("body", "parent_id", "is_reaction", "is_pinned")
 
 
 class HashidCharPrimaryKeyRelatedField(PrimaryKeyRelatedField):
