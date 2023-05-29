@@ -12,6 +12,7 @@ from rest_framework.reverse import reverse
 from tests.asgi import application
 from typing import Tuple
 
+
 User = get_user_model()
 
 
@@ -71,7 +72,7 @@ class TestChat(TransactionTestCase):
         Regression for: https://github.com/djangoflow/django-df-chat/issues/13
         """
         user, token = await self.create_user()
-        communicator = WebsocketCommunicator(application, f"ws/chat/")
+        communicator = WebsocketCommunicator(application, "ws/chat/")
         connected, _ = await communicator.connect()
         self.assertFalse(connected)
         # Checking that our user was added to the scope.
