@@ -30,7 +30,12 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "otp_twilio",
     "df_chat",
+    "django_extensions"
 ]
+
+GRAPH_MODELS = {
+  'group_models': True,
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
