@@ -30,11 +30,13 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "otp_twilio",
     "df_chat",
-    "django_extensions"
+    "django_extensions",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
 ]
 
 GRAPH_MODELS = {
-  'group_models': True,
+    "group_models": True,
 }
 
 MIDDLEWARE = [
@@ -124,4 +126,20 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_SCHEMA_CLASS": "tests.schema.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "DF Chat API",
+    "DESCRIPTION": "DF Chat API (Django)",
+    "VERSION": "0.0.1",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SWAGGER_UI_DIST": "SIDECAR",  # shorthand to use the sidecar instead
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
+    "SCHEMA_PATH_PREFIX": "/api/v1",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "COMPONENT_NO_READ_ONLY_REQUIRED": True,
+    # "ENUM_NAME_OVERRIDES": {"GenderEnum": "accounts.models.Gender"},
+    "ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE": False,
 }
