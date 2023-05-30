@@ -36,6 +36,7 @@ class Message(TimeStampedModel):
     user_attribute = "room_user.user"
 
     is_reaction = models.BooleanField(default=False)
+    is_pinned = models.BooleanField(default=False)
     room_user = models.ForeignKey(RoomUser, on_delete=models.CASCADE)
     parent = models.ForeignKey(
         "self", blank=True, null=True, on_delete=models.CASCADE, related_name="children"
