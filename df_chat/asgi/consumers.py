@@ -100,6 +100,11 @@ class RoomsConsumer(GenericAsyncAPIConsumer):
         """
         Unsubscribe from all rooms
         """
+        # Unauthenticated users are not subscribed.
+        # (This is called on channel close.)
+        if not self.user.is_authenticated:
+            return
+
         rooms = await self.get_rooms()
         for room in rooms:
             await self.room_user_activity.unsubscribe(room_pk=room.pk)

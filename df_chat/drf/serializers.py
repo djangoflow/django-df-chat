@@ -250,5 +250,5 @@ class UserNameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        read_only_fields = ("display_name",)
+        read_only_fields = ("first_name",)
         fields = ("id", *read_only_fields)

@@ -6,6 +6,7 @@ from df_chat.tests.utils import RoomFactory
 from df_chat.tests.utils import TEST_USER_PASSWORD
 from df_chat.tests.utils import UserFactory
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.test import TransactionTestCase
 from rest_framework.reverse import reverse
 from tests.asgi import application
@@ -62,6 +63,20 @@ class TestChat(TransactionTestCase):
         self.assertTrue(connected)
         # Checking that our user was added to the scope.
         self.assertEqual(communicator.scope["user"], user)
+        await communicator.disconnect()
+
+    async def test_auth_fail(self):
+        """
+        Trying to connect without providing a token should result in permission denied.
+
+        Regression for: https://github.com/djangoflow/django-df-chat/issues/13
+        """
+        user, token = await self.create_user()
+        communicator = WebsocketCommunicator(application, "ws/chat/")
+        connected, _ = await communicator.connect()
+        self.assertFalse(connected)
+        # Checking that our user was added to the scope.
+        self.assertIsInstance(communicator.scope["user"], AnonymousUser)
         await communicator.disconnect()
 
     async def test_chat_single_room(self):
