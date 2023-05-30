@@ -12,7 +12,6 @@ from rest_framework.relations import ManyRelatedField
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework_recursive.fields import RecursiveField
 from typing import Optional
-from typing import Union
 
 
 User = get_user_model()
@@ -110,7 +109,7 @@ class MessageImageSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    def get_is_me(self, obj) -> Optional[Union[bool, int]]:
+    def get_is_me(self, obj) -> Optional[bool]:
         if self.context.get("request"):
             return self.context["request"].user.id == obj.room_user.user_id
 
