@@ -7,6 +7,8 @@ from django.db.models import OuterRef
 from django.db.models import Q
 from model_utils.models import TimeStampedModel
 
+from df_chat.models.room_category import RoomCategory
+
 
 User = get_user_model()
 
@@ -46,6 +48,13 @@ class Room(TimeStampedModel):
     user_attribute = "creator"
     creator = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="rooms_creator_set"
+    )
+    category = models.ForeignKey(
+        RoomCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rooms",
     )
     title = models.CharField(max_length=512)
     description = models.TextField(default="", blank=True)

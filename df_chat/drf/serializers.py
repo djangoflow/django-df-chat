@@ -1,7 +1,4 @@
-from ..models import Message
-from ..models import MessageImage
-from ..models import Room
-from ..models import RoomUser
+from ..models import Message, MessageImage, Room, RoomUser, RoomCategory
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema_field
@@ -171,6 +168,7 @@ class HashidCharPrimaryKeyRelatedField(PrimaryKeyRelatedField):
 class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
     id = HashidSerializerCharField(read_only=True)
     creator_id = HashidSerializerCharField(read_only=True)
+    category_id = HashidSerializerCharField(read_only=True)
     message_total_count = serializers.IntegerField(read_only=True)
     message_new_count = serializers.IntegerField(read_only=True)
     users = ManyRelatedField(
@@ -189,6 +187,7 @@ class RoomSerializer(CreatorMixin, serializers.ModelSerializer):
             "created",
             "modified",
             "creator_id",
+            "category_id",
             "message_total_count",
             "message_new_count",
             "last_message",
@@ -250,3 +249,11 @@ class UserNameSerializer(serializers.ModelSerializer):
         model = User
         read_only_fields = ("first_name",)
         fields = ("id", *read_only_fields)
+
+
+class RoomCategorySerializer(serializers.ModelSerializer):
+    id = HashidSerializerCharField(read_only=True)
+
+    class Meta:
+        model = RoomCategory
+        fields = ("id", "name", "description")

@@ -1,9 +1,6 @@
-from ..models import Message
-from ..models import MessageImage
-from ..models import Room
-from ..models import RoomUser
+from ..models import Message, MessageImage, Room, RoomUser, RoomCategory
 from ..permissions import IsOwnerOrReadOnly
-from .serializers import ErrorResponseSerializer
+from .serializers import ErrorResponseSerializer, RoomCategorySerializer
 from .serializers import MessageImageSerializer
 from .serializers import MessageSeenSerializer
 from .serializers import MessageSerializer
@@ -25,7 +22,9 @@ from rest_framework.viewsets import ModelViewSet
 class RoomViewSet(ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsOwnerOrReadOnly)
     serializer_class = RoomSerializer
-    queryset = Room.objects.all().select_related("creator").order_by("-created")
+    queryset = (
+        Room.objects.all().select_related("creator", "category").order_by("-created")
+    )
 
     @action(
         methods=["post"],
@@ -136,3 +135,9 @@ class MessageImageViewSet(ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(message__room_user__user=self.request.user)
+
+
+class RoomCategoryViewSet(ModelViewSet):
+    serializer_class = RoomCategorySerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    queryset = RoomCategory.objects.all()

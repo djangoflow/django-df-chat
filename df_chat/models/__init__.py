@@ -5,6 +5,7 @@ from .room_user import RoomUser
 from .message import Message
 from .message_image import MessageImage
 from .user_chat import UserChat
+from .room_category import RoomCategory
 
 __all__ = [
     "Room",
@@ -12,4 +13,5 @@ __all__ = [
     "Message",
     "MessageImage",
     "UserChat",
+    "RoomCategory",
 ]

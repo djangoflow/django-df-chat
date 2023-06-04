@@ -1,7 +1,4 @@
-from .viewsets import MessageImageViewSet
-from .viewsets import MessageViewSet
-from .viewsets import RoomUserViewSet
-from .viewsets import RoomViewSet
+from .viewsets import MessageViewSet, RoomUserViewSet, RoomViewSet, MessageImageViewSet, RoomCategoryViewSet
 from django.conf import settings
 from rest_framework.routers import DefaultRouter
 from rest_framework.routers import SimpleRouter
@@ -16,10 +13,11 @@ else:
 
 router.register("rooms", RoomViewSet, basename="rooms")
 router.register("images", MessageImageViewSet, basename="images")
+router.register("categories", RoomCategoryViewSet, basename="room-categories")
 
 urlpatterns = router.urls
 
 rooms_router = routers.NestedSimpleRouter(router, "rooms", lookup="room")
-rooms_router.register("users", RoomUserViewSet, basename="rooms-users")
-rooms_router.register("messages", MessageViewSet, basename="rooms-messages")
+rooms_router.register("users", RoomUserViewSet, basename="room-users")
+rooms_router.register("messages", MessageViewSet, basename="room-messages")
 urlpatterns = router.urls + rooms_router.urls

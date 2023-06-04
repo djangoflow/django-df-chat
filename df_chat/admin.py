@@ -1,3 +1,4 @@
+from df_chat.models.room_category import RoomCategory
 from .models import Message
 from .models import MessageImage
 from .models import Room
@@ -41,3 +42,9 @@ class MessageAdmin(admin.ModelAdmin):
         return obj.room_user.room
 
     list_display = ("room", "body", "room_user", "parent", "created", "modified")
+
+
+@admin.register(RoomCategory)
+class RoomCategoryAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "description")
+    list_filter = ("name",)
