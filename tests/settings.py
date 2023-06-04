@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 
@@ -33,6 +34,8 @@ INSTALLED_APPS = [
     "django_extensions",
     "drf_spectacular",
     "drf_spectacular_sidecar",
+    "debug_toolbar",
+    "django_filters",
 ]
 
 GRAPH_MODELS = {
@@ -40,6 +43,7 @@ GRAPH_MODELS = {
 }
 
 MIDDLEWARE = [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -66,6 +70,11 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+
+INTERNAL_IPS = [
+    "127.0.0.1",
 ]
 
 SITE_ID = 1
@@ -127,6 +136,10 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "tests.schema.AutoSchema",
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=2),
 }
 
 SPECTACULAR_SETTINGS = {

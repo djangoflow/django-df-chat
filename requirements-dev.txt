@@ -5,3 +5,5 @@ pre-commit
 django-extensions
 pyparsing
 pydot
+django-debug-toolbar
+black
