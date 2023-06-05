@@ -9,6 +9,7 @@ from .serializers import RoomUserSerializer
 from .serializers import UserNameSerializer
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
+from django_filters import rest_framework as filters
 from rest_framework import parsers
 from rest_framework import permissions
 from rest_framework import response
@@ -22,6 +23,8 @@ from rest_framework.viewsets import ModelViewSet
 class RoomViewSet(ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, IsOwnerOrReadOnly)
     serializer_class = RoomSerializer
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ("category",)
     queryset = (
         Room.objects.all().select_related("creator", "category").order_by("-created")
     )

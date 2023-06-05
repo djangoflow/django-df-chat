@@ -14,3 +14,4 @@ drf-spectacular[sidecar]
 fcm-django<=1.0.12
 Pillow
 pyjwt
+django-filter
