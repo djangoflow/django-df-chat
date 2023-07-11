@@ -14,7 +14,6 @@ class RoomUserManager(models.Manager):
             is_active=True,
         )
         if user_pk:
-            room_user.room.users.add(user_pk)
             # Public rooms are muted by default
             if room_user.room.is_public:
                 room_user.room.muted_by.add(user_pk)
