@@ -1,19 +1,28 @@
-from pathlib import Path
+from df_api_drf.defaults import (
+    DF_API_DRF_INSTALLED_APPS,
+)
+from df_api_drf.defaults import (
+    REST_FRAMEWORK as DEFAULT_REST_FRAMEWORK,
+)
+from df_api_drf.defaults import (
+    SPECTACULAR_SETTINGS as DEFAULT_SPECTACULAR_SETTINGS,
+)
 
+from df_chat.defaults import DF_CHAT_INSTALLED_APPS
 
 DEBUG = True
 
-ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent
-
 ROOT_URLCONF = "tests.urls"
 SECRET_KEY = "111111"
-HASHID_FIELD_SALT = "111111"
-HASHID_FIELD_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+AUTH_USER_MODEL = "auth.User"
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 INSTALLED_APPS = [
-    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -21,23 +30,10 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework",
-    "fcm_django",
-    "df_notifications",
-    "django_slack",
-    "import_export",
+    *DF_API_DRF_INSTALLED_APPS,
+    *DF_CHAT_INSTALLED_APPS,
     "tests.test_app.apps.TestAppConfig",
-    "django_celery_beat",
-    "otp_twilio",
-    "df_chat",
-    "django_extensions",
-    "drf_spectacular",
-    "drf_spectacular_sidecar",
 ]
-
-GRAPH_MODELS = {
-    "group_models": True,
-}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -92,55 +88,21 @@ LOGGING = {
 }
 
 STATIC_URL = "/static/"
-STATIC_ROOT = str(ROOT_DIR / "staticfiles")
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
 
 ALLOWED_HOSTS = ["*"]
 
-CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
-ASGI_APPLICATION = "tests.asgi.application"
-
-
-DF_NOTIFICATIONS = {
-    "CHANNELS": {
-        "email": "df_notifications.channels.EmailChannel",
-        "console": "df_notifications.channels.ConsoleChannel",
-        "push": "df_notifications.channels.FirebasePushChannel",
-        "webhook": "df_notifications.channels.JSONPostWebhookChannel",
-        "slack": "df_notifications.channels.SlackChannel",
-        "test": "tests.channels.TestChannel",
-    },
-    "SAVE_HISTORY_CONTENT": True,
-    "REMINDERS_CHECK_PERIOD": 5,
-}
-
-
-DF_AUTH = {
-    "USER_IDENTITY_FIELDS": ("username",),
-}
-
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_SCHEMA_CLASS": "tests.schema.AutoSchema",
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    **DEFAULT_REST_FRAMEWORK,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "DF Chat API",
-    "DESCRIPTION": "DF Chat API (Django)",
-    "VERSION": "0.0.1",
-    "SERVE_INCLUDE_SCHEMA": False,
-    "SWAGGER_UI_DIST": "SIDECAR",  # shorthand to use the sidecar instead
-    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
-    "REDOC_DIST": "SIDECAR",
-    "SCHEMA_PATH_PREFIX": "/api/v1",
-    "COMPONENT_SPLIT_REQUEST": True,
-    "COMPONENT_NO_READ_ONLY_REQUIRED": True,
-    # "ENUM_NAME_OVERRIDES": {"GenderEnum": "accounts.models.Gender"},
-    "ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE": False,
+    **DEFAULT_SPECTACULAR_SETTINGS,
+}
+
+DF_CHAT = {
+    "TEST_SETTING": "test-replaced",
 }

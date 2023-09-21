@@ -1,14 +1,10 @@
 from django.apps import AppConfig
+from django.utils.translation import gettext_lazy as _
 
 
-class ChatConfig(AppConfig):
-    default_auto_field = "hashid_field.BigHashidAutoField"
+class DfModuleConfig(AppConfig):
     name = "df_chat"
-    api_path = "chat/"
-    asgi_prefix = "chat/"
+    verbose_name = _("DjangoFlow Chat")
 
-    def ready(self) -> None:
-        # Trigger registering signals for model observers
-        from df_chat.asgi.consumers import RoomsConsumer  # noqa
-
-        import df_chat.signals  # noqa
+    class DFMeta:
+        api_path = "chat/"

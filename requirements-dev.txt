@@ -1,7 +1,0 @@
-factory-boy
-pytest
-pytest-django
-pre-commit
-django-extensions
-pyparsing
-pydot

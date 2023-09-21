@@ -1,11 +1,7 @@
-from django.contrib.auth import get_user_model
-
-import pytest
+from rest_framework.test import APIClient
 
 
-User = get_user_model()
-
-pytestmark = [pytest.mark.django_db]
-
-
-...
+def test_test_endpoint_returns_200(client: APIClient) -> None:
+    response = client.get("/api/v1/chat/test/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "test"}

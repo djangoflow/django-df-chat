@@ -128,11 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.idea
-.DS_Store
 
-# visual studio code
-.vscode/*
-
-mediafiles/
-staticfiles/
+.idea/
