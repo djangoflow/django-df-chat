@@ -25,6 +25,8 @@ dependencies = [
     "Django>4",
     "djangorestframework>=3",
     "django-df-api-drf>=0.0.9",
+    "django-model-utils",
+    "Pillow",
 ]
 
 [project.optional-dependencies]
