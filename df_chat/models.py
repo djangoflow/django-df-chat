@@ -5,26 +5,6 @@ from model_utils.models import TimeStampedModel
 from .settings import api_settings
 
 
-class ChatUserAvatar(TimeStampedModel):
-    file = models.ImageField(upload_to="chat_user_avatars")
-
-
-class ChatUser(TimeStampedModel):
-    user = models.OneToOneField(
-        api_settings.CHAT_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="chat_user",
-    )
-    description = models.TextField(default="")
-    avatar = models.ForeignKey(
-        ChatUserAvatar,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="+",
-    )
-
-
 class ChatRoomAvatar(TimeStampedModel):
     file = models.ImageField(upload_to="chat_room_avatars")
 
@@ -68,10 +48,10 @@ class ChatPermission(models.TextChoices):
 
 class RoomUser(TimeStampedModel):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
-    user = models.ForeignKey(ChatUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(api_settings.CHAT_USER_MODEL, on_delete=models.CASCADE)
     muted = models.BooleanField(default=False)
     created_by = models.ForeignKey(
-        ChatUser,
+        api_settings.CHAT_USER_MODEL,
         on_delete=models.SET_NULL,
         related_name="+",
         null=True,
@@ -90,7 +70,7 @@ class RoomUserPermission(TimeStampedModel):
 
 class ChatMessage(TimeStampedModel):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
-    user = models.ForeignKey(ChatUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(api_settings.CHAT_USER_MODEL, on_delete=models.CASCADE)
     text = models.TextField(default="")
     edited_at = models.DateTimeField(null=True, blank=True)
     in_reply_to = models.ForeignKey(
@@ -118,5 +98,5 @@ class ChatMessageReaction(TimeStampedModel):
     message = models.ForeignKey(
         ChatMessage, on_delete=models.CASCADE, related_name="reactions"
     )
-    user = models.ForeignKey(ChatUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(api_settings.CHAT_USER_MODEL, on_delete=models.CASCADE)
     reaction = models.CharField(max_length=255)

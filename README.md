@@ -5,12 +5,6 @@
 
 ### Model Data
 
-ChatUser
-
-- One-to-one to User (or other model from settings, like settings.DF_CHAT_USER_MODEL)
-- description = str
-- avatar = ImageField
-
 
 ChatRoom
 
@@ -23,7 +17,7 @@ ChatRoom
 RoomUser
 
 - room = ForeignKey(ChatRoom)
-- user = ForeignKey(ChatUser)
+- user = ForeignKey(settings.CHAT_USER_MODEL)
 - muted = BooleanField(default=False)
 - created_by = ForeignKey(ChatUser)
 - last_seen_at = DateTimeField()  # To show how many messages are unread
@@ -45,7 +39,7 @@ It could be JSONField with list of permissions. Or separate RoomUserPermission m
 ChatMessage
 
 - room = ForeignKey(ChatRoom)
-- user = ForeignKey(ChatUser)
+- user = ForeignKey(settings.CHAT_USER_MODEL)
 - text = TextField()
 
 ChatMessageMedia
@@ -63,7 +57,7 @@ ChatMedia
 ChatMessageReaction
 
 - message = ForeignKey(ChatMessage)
-- user = ForeignKey(ChatUser)
+- user = ForeignKey(settings.CHAT_USER_MODEL)
 - reaction = CharField(max_length=255) -- Constrained in settings: only `like/dislike` or `emoji` or custom text.
 
 

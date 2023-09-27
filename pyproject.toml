@@ -37,6 +37,8 @@ test = [
     "black==23.7.0",
     "ruff==0.0.284",
     "httpretty",
+    "model_bakery",
+    "faker",
 ]
 
 [build-system]

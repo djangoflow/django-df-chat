@@ -16,7 +16,7 @@ ROOT_URLCONF = "tests.urls"
 SECRET_KEY = "111111"
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
-AUTH_USER_MODEL = "auth.User"
+AUTH_USER_MODEL = "test_app.User"
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -104,5 +104,5 @@ SPECTACULAR_SETTINGS = {
 }
 
 DF_CHAT = {
-    "TEST_SETTING": "test-replaced",
+    "CHAT_USER_MODEL": "test_app.ChatUser",
 }
