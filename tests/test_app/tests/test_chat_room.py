@@ -6,10 +6,10 @@ from df_chat.models import ChatRoom
 
 
 class ChatRoomViewSetTestCase(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.chat_room_url = reverse("chat_room-list")
 
-    def test_list_chat_rooms(self):
+    def test_list_chat_rooms(self) -> None:
         ChatRoom.objects.create(name="Room 1", description="Description 1")
         ChatRoom.objects.create(name="Room 2", description="Description 2")
 
