@@ -16,7 +16,7 @@ class ChatRoomViewSet(
     mixins.RetrieveModelMixin,
     GenericViewSet,
 ):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     queryset = ChatRoom.objects.all()
     serializer_class = ChatRoomSerializer
 
