@@ -1,8 +1,12 @@
+import typing
+
 from django.db import models
 from django.utils import timezone
 from model_utils.models import TimeStampedModel
 
 from .settings import api_settings
+
+M = typing.Type[models.Model]
 
 
 class ChatRoomAvatar(TimeStampedModel):

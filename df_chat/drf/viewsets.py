@@ -29,7 +29,7 @@ class RoomUserViewSet(
     mixins.DestroyModelMixin,
     GenericViewSet,
 ):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     queryset = RoomUser.objects.all()
     serializer_class = RoomUserSerializer
 
