@@ -10,12 +10,12 @@ from .viewsets import (
 
 router = DefaultRouter()
 
-router.register("room", ChatRoomViewSet, basename="chat_room")
-router.register("user", RoomUserViewSet, basename="room_user")
-router.register("message", ChatMessageViewSet, basename="chat_message")
-router.register("media", ChatMediaViewSet, basename="chat_media")
+router.register("room", ChatRoomViewSet, basename="room")
+router.register("user", RoomUserViewSet, basename="user")
+router.register("message", ChatMessageViewSet, basename="message")
+router.register("media", ChatMediaViewSet, basename="media")
 router.register(
-    "message_reactions", ChatMessageReactionsViewSet, basename="chat_message_reactions"
+    "message_reactions", ChatMessageReactionsViewSet, basename="message_reactions"
 )
 
 urlpatterns = router.urls
