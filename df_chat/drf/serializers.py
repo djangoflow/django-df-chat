@@ -1,53 +1,97 @@
-from typing import Any, Dict
-
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 
-from df_chat.models import ChatMessage, ChatMessageReaction, ChatRoom, RoomUser
-from df_chat.utils import get_chat_user_model
+from df_chat.constants import ROOM_CHAT_ALIAS
+from df_chat.models import ChatMessage, ChatMembers, ChatRoom
 
-ChatUser = get_chat_user_model()
+User = get_user_model()
 
 
-class ChatRoomSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=ChatUser.objects.all(), allow_null=True
-    )
+class UserSerializer(serializers.ModelSerializer):
+    is_online = serializers.CharField(source='chat_member.is_online', read_only=True)
 
     class Meta:
-        model = ChatRoom
-        fields = "__all__"
-
-    def validate(self, attrs: Dict[str, Any]) -> Dict:
-        user = self.context["request"].user
-        if attrs["type"] == ChatRoom.Type.PRIVATE_MESSAGES and not attrs["user"]:
-            raise serializers.ValidationError(
-                "User required for creating private message room"
-            )
-        if (
-            attrs["type"] == ChatRoom.Type.PRIVATE_MESSAGES
-            and RoomUser.objects.filter(
-                create_by=user.chat_user,
-                room__type=ChatRoom.Type.PRIVATE_MESSAGES,
-                user=attrs["user"],
-            ).exists()
-        ):
-            raise serializers.ValidationError("Room already exists...")
-        return attrs
+        model = User
+        fields = ["id", "first_name", "last_name", "email", 'is_online']
 
 
-class RoomUserSerializer(serializers.ModelSerializer):
+
+
+
+class ChatMembersSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
     class Meta:
-        model = RoomUser
-        fields = "__all__"
+        model = ChatMembers
+        fields = (
+            "joined_at",
+            "user",
+        )
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):
+    ws_room_name = serializers.SerializerMethodField(read_only=True)
+    sender = serializers.PrimaryKeyRelatedField(
+        default=serializers.CurrentUserDefault(),
+        queryset=User.objects.all(),
+    )
+
     class Meta:
         model = ChatMessage
-        fields = "__all__"
+        fields = (
+            'id',
+            "chat_group",
+            "sender",
+            "message",
+            "created_at",
+            "ws_room_name"
+        )
+
+    def get_ws_room_name(self, instance):
+        return ROOM_CHAT_ALIAS.format(room_id=instance.chat_group.id)
+
+    def to_representation(self, instance):
+        result = super(ChatMessageSerializer, self).to_representation(instance)
+        if hasattr(instance, "type"):
+            result = {"type": instance.type, **result}
+        return result
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        instance.type = "chat.message.new"
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.type = "chat.message.edit"
+        return instance
 
 
-class ChatMessageReactionSerializer(serializers.ModelSerializer):
+class ChatRoomSerializer(serializers.ModelSerializer):
+    newest_message = serializers.CharField(read_only=True)
+    created_by = serializers.PrimaryKeyRelatedField(
+        default=serializers.CurrentUserDefault(),
+        queryset=User.objects.all(),
+    )
     class Meta:
-        model = ChatMessageReaction
-        fields = "__all__"
+        model = ChatRoom
+        fields = (
+            "id",
+            "title",
+            "created_at",
+            "created_by",
+            "chat_type",
+            "newest_message",
+        )
+
+
+
+class MemberIdsSerializer(serializers.Serializer):
+    ACTION = "action"
+    ACTION_ADD = "add"
+    ACTION_REMOVE = "remove"
+
+    user_ids = serializers.ListField(
+       child=serializers.IntegerField()
+    )
+    action = serializers.ChoiceField([ACTION_ADD, ACTION_REMOVE])

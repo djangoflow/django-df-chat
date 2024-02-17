@@ -1,0 +1,111 @@
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Chat Room</title>
+</head>
+<body>
+<span><p>Members:</p></span><br/>
+<div id="members">
+</div>
+    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
+    <input id="chat-message-input" type="text" size="100"><br>
+    <input id="chat-message-submit" type="button" value="Send">
+    {{ object.pk|json_script:"group-pk" }}
+    <script>
+        const groupPk = JSON.parse(document.getElementById('group-pk').textContent);
+
+        const messagesUrl = `/api/v1/chat/messages/${groupPk}`;
+        const outputElement = document.getElementById('output');
+
+        const messagesUrl = `/api/v1/chat/messages/${groupPk}`;
+
+        fetch(messagesUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+              console.log(data['results'])
+              for (const message of data['results'].reverse()) {
+                  document.querySelector('#chat-log').value += (message['message'] + '\n');
+             }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+
+
+
+        function sendMessage(msg, ws){
+          waitForSocketConnection(ws, function(){
+              ws.send(msg);
+          });
+      }
+
+      function waitForSocketConnection(socket, callback){
+          setTimeout(
+              function () {
+                  if (socket.readyState === 1) {
+                      if (callback != null){
+                          callback();
+                      }
+                  } else {
+                      waitForSocketConnection(socket, callback);
+                  }
+
+              }, 5);
+      }
+
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/room/'
+            + groupPk
+            + '/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            switch (data["type"])
+            {
+               case "chat.members.list":
+                 document.querySelector('#members').innerHTML = '';
+                 for (const member of data['members']) {
+                   document.querySelector('#members').innerHTML += '<span>' + member['user']['email'] + ': ' + member['user']['id']+ ' is online:  ' +  member['user']['is_online'] +'</span><br/>';
+                 }
+                   break;
+
+               default:
+                    document.querySelector('#chat-log').value += (data.message + '\n');
+
+            }
+
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.key === 'Enter') {  // enter, return
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            sendMessage(JSON.stringify({
+                "type": "chat.message.new",
+                'message': message
+            }), chatSocket)
+            messageInputDom.value = '';
+        };
+    </script>
+</body>
+</html>

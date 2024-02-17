@@ -1,3 +1,5 @@
+import os
+
 from df_api_drf.defaults import (
     DF_API_DRF_INSTALLED_APPS,
 )
@@ -23,15 +25,16 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 INSTALLED_APPS = [
+    'daphne',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
     *DF_API_DRF_INSTALLED_APPS,
     *DF_CHAT_INSTALLED_APPS,
+    "django.contrib.staticfiles",
     "tests.test_app.apps.TestAppConfig",
 ]
 
@@ -44,7 +47,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
+ASGI_APPLICATION = "tests.test_app.asgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -105,4 +108,10 @@ SPECTACULAR_SETTINGS = {
 
 DF_CHAT = {
     "CHAT_USER_MODEL": "test_app.ChatUser",
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }
