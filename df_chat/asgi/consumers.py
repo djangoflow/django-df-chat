@@ -63,6 +63,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            await self.close()
+            return
         await self.accept()
         await self.set_member_channel(is_online=True)
         await self.subscribe()
