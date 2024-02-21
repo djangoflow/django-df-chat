@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from df_chat.models import ChatRoom, ChatMembers, ChatMessage, MemberStatus
-from tests.test_app.models import ChatUser, User
+from df_chat.models import ChatRoom, ChatMembers, ChatMessage, MemberChannel
+from tests.test_app.models import User
 
 
 @admin.register(User)
@@ -9,9 +9,9 @@ class UserAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(MemberStatus)
-class MemberStatusAdmin(admin.ModelAdmin):
-    pass
+@admin.register(MemberChannel)
+class MemberChannelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'created_at', 'user')
 
 
 class ChatUserInline(admin.TabularInline):

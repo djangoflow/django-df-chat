@@ -28,7 +28,7 @@ dependencies = [
     "django-model-utils",
     "Pillow",
     "channels==4.0.0",
-    "daphne==4.1.0"
+    "channels[daphne]"
 ]
 
 [project.optional-dependencies]

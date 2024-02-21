@@ -10,7 +10,7 @@ from df_api_drf.defaults import (
     SPECTACULAR_SETTINGS as DEFAULT_SPECTACULAR_SETTINGS,
 )
 
-from df_chat.defaults import DF_CHAT_INSTALLED_APPS
+from df_chat.defaults import DF_CHAT_INSTALLED_APPS, get_redis_channel_layer
 
 DEBUG = True
 
@@ -110,8 +110,4 @@ DF_CHAT = {
     "CHAT_USER_MODEL": "test_app.ChatUser",
 }
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
+CHANNEL_LAYERS = get_redis_channel_layer()

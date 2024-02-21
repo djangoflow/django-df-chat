@@ -4,8 +4,8 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from df_chat.constants import USER_CHAT_ALIAS, ROOM_CHAT_ALIAS, SYSTEM_CHAT_ALIAS
-from df_chat.drf.serializers import ChatMembersSerializer, ChatMessageSerializer
-from df_chat.models import ChatMembers, MemberStatus
+from df_chat.drf.serializers import ChatMessageSerializer
+from df_chat.models import MemberChannel
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -64,12 +64,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
         await self.accept()
-        await self.set_chat_member_status(is_online=True)
+        await self.set_member_channel(is_online=True)
         await self.subscribe()
 
     async def disconnect(self, close_code):
         await self.unsubscribe()
-        await self.set_chat_member_status(is_online=False)
+        await self.set_member_channel(is_online=False)
 
     async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
@@ -108,26 +108,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': event.get('message', '')
             }
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return serializer.data.get('ws_room_name'), serializer.data
+        if serializer.is_valid():
+            serializer.save()
+            return serializer.data.get('ws_room_name'), serializer.data
+        return None, None
 
     @database_sync_to_async
-    def set_chat_member_status(self, is_online: bool) -> None:
-        if hasattr(self.user, 'chat_member'):
-            self.user.chat_member.is_online = is_online
-            self.user.chat_member.channel_name = self.channel_name if is_online else None
-            self.user.chat_member.save()
-        else:
-            MemberStatus.objects.create(
-                user=self.user, is_online=is_online, channel_name=self.channel_name
+    def set_member_channel(self, is_online: bool) -> None:
+        if is_online:
+            MemberChannel.objects.create(
+                user=self.user, channel_name=self.channel_name
             )
-
-    @database_sync_to_async
-    def get_chat_members_data(self):
-        members_qs = ChatMembers.objects.prefetch_related('user').filter(chat_group_id=self.group_pk)
-        serializer = ChatMembersSerializer(members_qs, many=True)
-        return serializer.data
-
-
-
+        else:
+            MemberChannel.objects.filter(channel_name=self.channel_name).delete()

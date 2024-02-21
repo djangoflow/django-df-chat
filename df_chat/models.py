@@ -30,10 +30,25 @@ class ChatRoom(models.Model):
         return self.chat_type == 'private'
 
 
-class MemberStatus(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_member")
-    is_online = models.BooleanField(default=False)
+class MemberChannelQuerySet(models.QuerySet):
+    def subscribed_channels(self, user_id):
+        return self.filter(user_id=user_id)
+
+
+class MemberChannelManager(models.Manager):
+    def get_queryset(self):
+        return MemberChannelQuerySet(self.model, using=self._db)
+
+    def subscribed_channels(self, user_id):
+        return self.get_queryset().subscribed_channels(user_id)
+
+
+class MemberChannel(models.Model):
+    objects = MemberChannelManager()
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_alive_time = models.DateTimeField(null=True, blank=True)
     channel_name = models.CharField(max_length=128, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="channels")
 
 
 class ChatMembers(models.Model):

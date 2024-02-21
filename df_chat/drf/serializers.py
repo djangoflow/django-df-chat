@@ -8,14 +8,10 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    is_online = serializers.CharField(source='chat_member.is_online', read_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "email", 'is_online']
-
-
-
+        fields = ["id", "first_name", "last_name", "email",]
 
 
 class ChatMembersSerializer(serializers.ModelSerializer):
@@ -83,7 +79,6 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             "chat_type",
             "newest_message",
         )
-
 
 
 class MemberIdsSerializer(serializers.Serializer):

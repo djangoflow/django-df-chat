@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Subquery, Max
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.decorators import action
@@ -14,9 +14,9 @@ from asgiref.sync import async_to_sync
 from df_chat.drf.serializers import ChatRoomSerializer, UserSerializer, MemberIdsSerializer, \
     ChatMessageSerializer
 from df_chat.models import ChatMessage, ChatRoom
-from df_chat.paginators import RoomCursorPagination, ChatMessagePagination
+from df_chat.paginators import ChatMessagePagination
 from df_chat.permissions import IsChatRoomRelatedUser
-
+from df_chat.utils import DynamicUserGroupSubscriptionHandler
 
 User = get_user_model()
 
@@ -30,7 +30,6 @@ class RoomViewSet(
     GenericViewSet,
 ):
     authentication_classes = (SessionAuthentication, BasicAuthentication)
-    pagination_class = RoomCursorPagination
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ChatRoomSerializer
 
@@ -38,7 +37,9 @@ class RoomViewSet(
         newest = ChatMessage.objects.filter(chat_group=OuterRef("pk")).order_by("-created_at")
         return ChatRoom.objects.filter(
             users=self.request.user
-        ).annotate(newest_message=Subquery(newest.values("message")[:1]))
+        ).annotate(
+            newest_message=Subquery(newest.values("message")[:1]),
+            last_message_id=Max('messages__id')).order_by("-last_message_id")
 
     @extend_schema(request=ChatMessageSerializer, responses={200: OpenApiResponse(response=ChatMessageSerializer(many=False))})
     @action(
@@ -90,17 +91,24 @@ class RoomViewSet(
             return Response(status=status.HTTP_200_OK)
 
         chat_room = ChatRoom.objects.get(id=pk)
-
+        subscription_handler =  DynamicUserGroupSubscriptionHandler()
         match serializer.validated_data.get(MemberIdsSerializer.ACTION):
+
             case MemberIdsSerializer.ACTION_ADD:
                 if chat_room.is_personal_chat and chat_room.users.count() <= 1:
                     chat_room.users.add(users[0])
+                    subscription_handler.subscribe(users[0].id, chat_room.id)
+
                 elif not chat_room.is_personal_chat:
                     chat_room.users.add(*users)
+                    for user in users:
+                        subscription_handler.subscribe(user.id, chat_room.id)
                 else:
                     return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
             case MemberIdsSerializer.ACTION_REMOVE:
                 chat_room.users.remove(*users)
+                for user in users:
+                    subscription_handler.unsubscribe(user.id, chat_room.id)
         return Response(status=status.HTTP_200_OK)
 
 
