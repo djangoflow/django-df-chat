@@ -584,14 +584,14 @@
 #frame .content .messages ul li:nth-last-child(1) {
   margin-bottom: 20px;
 }
-#frame .content .messages ul li.sent img {
+#frame .content .messages ul li.sent span {
   margin: 6px 8px 0 0;
 }
 #frame .content .messages ul li.sent p {
   background: #435f7a;
   color: #f5f5f5;
 }
-#frame .content .messages ul li.replies img {
+#frame .content .messages ul li.replies span {
   float: right;
   margin: 6px 0 0 8px;
 }
@@ -682,19 +682,7 @@
   outline: none;
 }
 </style></head><body>
-<!--
-
-A concept for a chat interface.
-
-Try writing a new message! :)
-
-
-Follow me here:
-Twitter: https://twitter.com/thatguyemil
-Codepen: https://codepen.io/emilcarlsson/
-Website: http://emilcarlsson.se/
-
--->
+{{ user_id|json_script:"user-id" }}
 <main id="app">
     <div id="frame">
 	<div id="sidepanel">
@@ -714,8 +702,9 @@ Website: http://emilcarlsson.se/
 	<div class="content">
 		<div class="messages">
 			<ul>
-				<li class="sent" v-for="message in messages">
-					<p>[[ message.message ]]</p>
+				<li :class="[activeUserId == message.created_by ? 'replies' :  'sent' ]" v-for="message in messages">
+					<span>user id: [[message.created_by]]</span>
+                    <p>[[ message.message ]]</p>
 				</li>
 			</ul>
 		</div>
@@ -732,7 +721,7 @@ Website: http://emilcarlsson.se/
 <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
 
 <script >
-
+const activeUserId = JSON.parse(document.getElementById('user-id').textContent);
 
 var app = new Vue({
   el: '#app',
@@ -741,6 +730,7 @@ var app = new Vue({
     typedMessage: '',
     connection: null,
     activeRoom: null,
+    activeUserId: activeUserId,
     rooms: [],
     messages: []
   },
