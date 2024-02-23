@@ -1,12 +1,6 @@
 from django.contrib import admin
 
 from df_chat.models import ChatMember, ChatMessage, ChatRoom, MemberChannel
-from tests.test_app.models import User
-
-
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    pass
 
 
 @admin.register(MemberChannel)
