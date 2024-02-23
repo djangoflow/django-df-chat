@@ -14,4 +14,3 @@ urlpatterns = [
     path("rooms/<int:room_id>/", include(messages_router.urls)),
     *room_router.urls,
 ]
-# /room/123/messages
