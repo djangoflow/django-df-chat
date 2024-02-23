@@ -1,20 +1,18 @@
-import os
-
 DF_CHAT_INSTALLED_APPS = [
     "df_chat",
 ]
 
 
-def get_redis_channel_layer(REDIS_URLS='redis://localhost:6379/0'):
-
+def get_redis_channel_layer(REDIS_URLS: str = "redis://localhost:6379/0") -> dict:
     return {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
             "CONFIG": {
-                "hosts": REDIS_URLS.split(','),
+                "hosts": REDIS_URLS.split(","),
             },
         },
     }
+
 
 # CHANNEL_LAYERS = {
 #     "default": {

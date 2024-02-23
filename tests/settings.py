@@ -1,5 +1,3 @@
-import os
-
 from df_api_drf.defaults import (
     DF_API_DRF_INSTALLED_APPS,
 )
@@ -25,7 +23,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 INSTALLED_APPS = [
-    'daphne',
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -110,4 +108,9 @@ DF_CHAT = {
     "CHAT_USER_MODEL": "test_app.ChatUser",
 }
 
-CHANNEL_LAYERS = get_redis_channel_layer()
+# Local in-memory backend
+# Check if os.getenv("REDIS_URL") exists
+if not DEBUG:
+    CHANNEL_LAYERS = get_redis_channel_layer()
+else:
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}

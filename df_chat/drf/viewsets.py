@@ -1,24 +1,51 @@
+from typing import Any
+
 from django.contrib.auth import get_user_model
-from django.db.models import OuterRef, Subquery, Max
-from drf_spectacular.utils import extend_schema, OpenApiResponse
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.decorators import action
-from rest_framework.generics import ListAPIView
+from django.db.models import Max, OuterRef, QuerySet, Subquery
 from rest_framework import mixins, permissions, status
+from rest_framework.authentication import (
+    BasicAuthentication,
+    SessionAuthentication,
+)
+from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-
-from df_chat.drf.serializers import ChatRoomSerializer, UserSerializer, MemberIdsSerializer, \
-    ChatMessageSerializer
+from df_chat.drf.serializers import (
+    ChatMessageSerializer,
+    ChatMessageUpdateSerializer,
+    ChatRoomMembersSerializer,
+    ChatRoomSerializer,
+)
 from df_chat.models import ChatMessage, ChatRoom
-from df_chat.paginators import ChatMessagePagination
-from df_chat.permissions import IsChatRoomRelatedUser
-from df_chat.utils import DynamicUserGroupSubscriptionHandler
+from df_chat.paginators import ChatMessagePagination, ChatRoomPagination
 
 User = get_user_model()
+
+
+class MessageViewSet(
+    mixins.ListModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    GenericViewSet,
+):
+    pagination_class = ChatMessagePagination
+    serializer_class = ChatMessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self) -> QuerySet[ChatMessage]:
+        return ChatMessage.objects.filter(chat_room=self.kwargs.get("room_id"))
+
+    def get_serializer_class(
+        self,
+    ) -> Any:
+        serializer_class = self.serializer_class
+        if self.request.method in ["PATCH", "PUT"]:
+            serializer_class = ChatMessageUpdateSerializer
+        return serializer_class
 
 
 class RoomViewSet(
@@ -32,96 +59,29 @@ class RoomViewSet(
     authentication_classes = (SessionAuthentication, BasicAuthentication)
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ChatRoomSerializer
+    pagination_class = ChatRoomPagination
 
-    def get_queryset(self):
-        newest = ChatMessage.objects.filter(chat_group=OuterRef("pk")).order_by("-created_at")
-        return ChatRoom.objects.filter(
-            users=self.request.user
-        ).annotate(
-            newest_message=Subquery(newest.values("message")[:1]),
-            last_message_id=Max('messages__id')).order_by("-last_message_id")
-
-    @extend_schema(request=ChatMessageSerializer, responses={200: OpenApiResponse(response=ChatMessageSerializer(many=False))})
-    @action(
-        detail=True,
-        methods=['POST', ],
-        url_path='message',
-    )
-    def message(self, request, pk=None, **kwargs):
-        data_to_store = {
-            **request.data,
-            "sender": self.request.user.id,
-            "chat_group": pk
-        }
-        serializer = ChatMessageSerializer(data=data_to_store)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"chat_group_{pk}",
-            {"type": "chat.post.message", **serializer.data}
+    def get_queryset(self) -> "QuerySet[ChatRoom]":
+        newest = ChatMessage.objects.filter(chat_room=OuterRef("pk")).order_by(
+            "-created"
         )
-        return Response(serializer.data, status=200)
+        return ChatRoom.objects.filter(users=self.request.user).annotate(
+            newest_message=Subquery(newest.values("message")[:1]),
+            last_message_id=Max("chatmessage__id"),
+        )
 
-    @extend_schema(responses={200: OpenApiResponse(response=UserSerializer(many=True))})
     @action(
         detail=True,
-        methods=['GET', ],
+        methods=["POST"],
+        serializer_class=ChatRoomMembersSerializer,
         pagination_class=None,
-        url_path='members',
+        url_path="member",
     )
-    def members(self, request, pk=None, **kwargs):
-        chat_members = User.objects.filter(chat_membership__chat_group=pk)
-        serializer = UserSerializer(chat_members, many=True)
-        return Response(serializer.data, status=200)
-
-    @extend_schema(request=MemberIdsSerializer, responses={
-        200: OpenApiResponse(response=None, description='Successfully added user to a group'),
-        406: OpenApiResponse(
-            response=None,
-            description='Not allowed error message for a private chat when we trying to add more than 2 users')
-    })
-    @members.mapping.post
-    def post_members(self, request, pk=None, **kwargs):
-        serializer = MemberIdsSerializer(data=request.data)
+    def members(self, request: Request, **kwargs: dict[str, Any]) -> Response:
+        instance = self.get_object()
+        serializer = ChatRoomMembersSerializer(
+            data=request.data, context={"request": request, "instance": instance}
+        )
         serializer.is_valid(raise_exception=True)
-
-        users = User.objects.filter(pk__in=serializer.validated_data.get("user_ids"))
-        if len(users) == 0:
-            return Response(status=status.HTTP_200_OK)
-
-        chat_room = ChatRoom.objects.get(id=pk)
-        subscription_handler =  DynamicUserGroupSubscriptionHandler()
-        match serializer.validated_data.get(MemberIdsSerializer.ACTION):
-
-            case MemberIdsSerializer.ACTION_ADD:
-                if chat_room.is_personal_chat and chat_room.users.count() <= 1:
-                    chat_room.users.add(users[0])
-                    subscription_handler.subscribe(users[0].id, chat_room.id)
-
-                elif not chat_room.is_personal_chat:
-                    chat_room.users.add(*users)
-                    for user in users:
-                        subscription_handler.subscribe(user.id, chat_room.id)
-                else:
-                    return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-            case MemberIdsSerializer.ACTION_REMOVE:
-                chat_room.users.remove(*users)
-                for user in users:
-                    subscription_handler.unsubscribe(user.id, chat_room.id)
-        return Response(status=status.HTTP_200_OK)
-
-
-class MessagesList(ListAPIView):
-    serializer_class = ChatMessageSerializer
-    pagination_class = ChatMessagePagination
-    permission_classes = (permissions.IsAuthenticated, IsChatRoomRelatedUser)
-
-    def get_queryset(self):
-        group_pk = self.kwargs['group_pk']
-        return ChatMessage.objects.filter(chat_group=group_pk)
-
-    def get(self, request, *args, **kwargs):
-        group = ChatRoom.objects.prefetch_related("users").filter(id=self.kwargs['group_pk']).first()
-        self.check_object_permissions(self.request, group)
-        return super(MessagesList, self).get(request, *args, **kwargs)
+        serializer.update()
+        return Response(data=serializer.data, status=status.HTTP_200_OK)

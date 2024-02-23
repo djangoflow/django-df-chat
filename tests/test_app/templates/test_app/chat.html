@@ -578,7 +578,7 @@
   clear: both;
   float: left;
   margin: 15px 15px 5px 15px;
-  width: calc(100% - 25px);
+  width: calc(100% - 160px);
   font-size: 0.9em;
 }
 #frame .content .messages ul li:nth-last-child(1) {
@@ -713,7 +713,7 @@ Website: http://emilcarlsson.se/
 	</div>
 	<div class="content">
 		<div class="messages">
-			<ul id="messages-list">
+			<ul>
 				<li class="sent" v-for="message in messages">
 					<p>[[ message.message ]]</p>
 				</li>
@@ -765,9 +765,9 @@ var app = new Vue({
         const data = JSON.parse(e.data);
           switch (data["type"]) {
               case "chat.message.new":
-                var foundIndex = app.rooms.findIndex(x => x.id == data['chat_group']);
+                var foundIndex = app.rooms.findIndex(x => x.id == data['chat_room']);
                 app.rooms[foundIndex].newest_message =  data.message;
-                if (data['chat_group'] === app.activeRoom){
+                if (data['chat_room'] === app.activeRoom){
                     app.messages.push(data);
                 }
             break;
@@ -777,7 +777,7 @@ var app = new Vue({
   },
   methods: {
     getChatMessages(roomId) {
-        return apiCall(`/api/v1/chat/messages/${roomId}`, function(res) {
+        return apiCall(`/api/v1/chat/rooms/${roomId}/messages/`, function(res) {
             return res.results.reverse()
         })
     },
@@ -791,7 +791,7 @@ var app = new Vue({
         });
     },
     getRooms() {
-        return apiCall(`/api/v1/chat/room/`, function(res) {
+        return apiCall(`/api/v1/chat/rooms/`, function(res) {
             return res.results
         })
     },
@@ -799,7 +799,7 @@ var app = new Vue({
         this.connection.send(JSON.stringify({
                 "type": "chat.message.new",
                 'message': this.typedMessage,
-                "chat_group": this.activeRoom
+                "chat_room": this.activeRoom
             }));
         this.typedMessage = '';
     },

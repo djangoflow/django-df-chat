@@ -1,80 +1,63 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.utils.translation import gettext_lazy as _
+from model_utils.models import TimeStampedModel
 
 
-class ChatRoom(models.Model):
+class ChatRoom(TimeStampedModel):
     class ChatType(models.TextChoices):
-        GROUP = "group", _("Group Chat")
-        PRIVATE = "private", _("Private Chat")
+        group = "group", _("Group Chat")
+        private = "private", _("Private Chat")
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="owned_chats")
-    modified_at = models.DateTimeField(auto_now=True)
-
-    title = models.CharField(max_length=515)
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, through='ChatMembers')
+    title = models.CharField(max_length=128)
+    users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, through="df_chat.ChatMember"
+    )
     chat_type = models.CharField(
-        max_length=30,
-        null=False,
-        blank=False,
-        choices=ChatType,
-        default=ChatType.PRIVATE
+        max_length=30, choices=ChatType.choices, default=ChatType.private
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.title
 
     @property
-    def is_personal_chat(self):
-        return self.chat_type == 'private'
+    def is_personal_chat(self) -> bool:
+        return self.chat_type == "private"
 
 
 class MemberChannelQuerySet(models.QuerySet):
-    def subscribed_channels(self, user_id):
+    def subscribed_channels(self, user_id: int) -> "models.QuerySet[MemberChannel]":
         return self.filter(user_id=user_id)
 
 
-class MemberChannelManager(models.Manager):
-    def get_queryset(self):
-        return MemberChannelQuerySet(self.model, using=self._db)
-
-    def subscribed_channels(self, user_id):
-        return self.get_queryset().subscribed_channels(user_id)
-
-
-class MemberChannel(models.Model):
-    objects = MemberChannelManager()
-    created_at = models.DateTimeField(auto_now_add=True)
-    last_alive_time = models.DateTimeField(null=True, blank=True)
+class MemberChannel(TimeStampedModel):
+    objects = MemberChannelQuerySet.as_manager()
+    last_alive_at = models.DateTimeField(null=True, blank=True)
     channel_name = models.CharField(max_length=128, null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="channels")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.id}"
 
 
-class ChatMembers(models.Model):
-    joined_at = models.DateTimeField(auto_now_add=True)
-    modified_at = models.DateTimeField(auto_now=True)
+class ChatMember(TimeStampedModel):
+    is_owner = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
 
-    # relations fields
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_membership")
-    chat_group = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name="chat_membership")
+    def __str__(self) -> str:
+        return f"Room: {self.chat_room.id} - User {self.user.id}"
 
 
-class ChatMessage(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    chat_group = models.ForeignKey(
+class ChatMessage(TimeStampedModel):
+    chat_room = models.ForeignKey(
         ChatRoom,
         on_delete=models.CASCADE,
-        related_name="messages",
-        null=False,
-        blank=False
     )
 
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     message = models.TextField(null=False, blank=False)
 
-    def __str__(self):
-        return f"{self.sender} >> {self.message}"
-
-    def save(self, *args, **kwargs):
-        super(ChatMessage, self).save(*args, **kwargs)
+    def __str__(self) -> str:
+        return f"{self.created_by} >> {self.message}"

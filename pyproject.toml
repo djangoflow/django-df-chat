@@ -41,6 +41,7 @@ test = [
     "httpretty",
     "model_bakery",
     "faker",
+    "channels_redis"
 ]
 
 [build-system]

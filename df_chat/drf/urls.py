@@ -1,12 +1,17 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import include, path
+from rest_framework.routers import SimpleRouter
 
-from df_chat.drf.viewsets import RoomViewSet, MessagesList
+from df_chat.drf.viewsets import MessageViewSet, RoomViewSet
 
-router = DefaultRouter()
+room_router = SimpleRouter()
+messages_router = SimpleRouter()
 
-router.register("room", RoomViewSet, basename="room")
+
+room_router.register("rooms", RoomViewSet, basename="room")
+
+messages_router.register("messages", MessageViewSet, basename="messages")
 urlpatterns = [
-    path('messages/<int:group_pk>', MessagesList.as_view()),
-    *router.urls
+    path("rooms/<int:room_id>/", include(messages_router.urls)),
+    *room_router.urls,
 ]
+# /room/123/messages
