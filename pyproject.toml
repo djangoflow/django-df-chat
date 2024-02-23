@@ -27,6 +27,8 @@ dependencies = [
     "django-df-api-drf>=0.0.9",
     "django-model-utils",
     "Pillow",
+    "channels==4.0.0",
+    "channels[daphne]"
 ]
 
 [project.optional-dependencies]
@@ -39,6 +41,7 @@ test = [
     "httpretty",
     "model_bakery",
     "faker",
+    "channels_redis"
 ]
 
 [build-system]

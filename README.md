@@ -1,6 +1,27 @@
 # django-df-chat
 
 
+## Development
+
+Installing dev requirements:
+
+```
+pip install -e .[test]
+```
+
+Installing pre-commit hook:
+
+```
+pre-commit install
+```
+
+Running tests:
+
+```
+pytest
+```
+
+
 ## New Design
 
 ### Model Data

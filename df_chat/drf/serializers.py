@@ -1,53 +1,125 @@
-from typing import Any, Dict
-
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from df_chat.models import ChatMessage, ChatMessageReaction, ChatRoom, RoomUser
-from df_chat.utils import get_chat_user_model
+from df_chat.models import ChatMember, ChatMessage, ChatRoom
 
-ChatUser = get_chat_user_model()
+User = get_user_model()
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "email",
+        ]
+
+
+class ChatMessageUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatMessage
+        fields = (
+            "id",
+            "created",
+            "modified",
+            "message",
+            "chat_room",
+            "created_by",
+        )
+        read_only_fields = (
+            "id",
+            "created",
+            "modified",
+            "chat_room",
+            "created_by",
+        )
+
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    created_by = serializers.PrimaryKeyRelatedField(
+        default=serializers.CurrentUserDefault(),
+        queryset=User.objects.all(),
+        required=False,
+    )
+    chat_room = serializers.PrimaryKeyRelatedField(
+        queryset=ChatRoom.objects.all(), many=False, required=False
+    )
+
+    def to_internal_value(self, raw_data: dict) -> dict:
+        data = super().to_internal_value(raw_data)
+        view = self.context.get("view")
+        if data["chat_room"] is None and view and view.kwargs.get("room_id"):
+            data["chat_room"] = ChatRoom.objects.get(id=view.kwargs.get("room_id"))
+        return data
+
+    class Meta:
+        model = ChatMessage
+        fields = (
+            "id",
+            "chat_room",
+            "created_by",
+            "message",
+            "created",
+        )
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=ChatUser.objects.all(), allow_null=True
+    newest_message = serializers.CharField(read_only=True)
+    users = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), write_only=True, many=True
     )
 
     class Meta:
         model = ChatRoom
-        fields = "__all__"
+        fields = ("id", "title", "created", "chat_type", "newest_message", "users")
+        read_only_fields = (
+            "id",
+            "created",
+            "newest_message",
+        )
 
-    def validate(self, attrs: Dict[str, Any]) -> Dict:
-        user = self.context["request"].user
-        if attrs["type"] == ChatRoom.Type.PRIVATE_MESSAGES and not attrs["user"]:
+    def validate(self, data: dict) -> dict:
+        chat_type = data["chat_type"]
+        users = data["users"]
+        if ChatRoom.ChatType.private.value == chat_type and len(users) != 2:
             raise serializers.ValidationError(
-                "User required for creating private message room"
+                "Only 2 users are allowed at private chat"
             )
-        if (
-            attrs["type"] == ChatRoom.Type.PRIVATE_MESSAGES
-            and RoomUser.objects.filter(
-                create_by=user.chat_user,
-                room__type=ChatRoom.Type.PRIVATE_MESSAGES,
-                user=attrs["user"],
-            ).exists()
-        ):
-            raise serializers.ValidationError("Room already exists...")
-        return attrs
+        return data
+
+    def create(self, validated_data: dict) -> ChatRoom:
+        instance = super().create(validated_data)
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            ChatMember.objects.filter(user=request.user, chat_room=instance).update(
+                is_owner=True
+            )
+        return instance
 
 
-class RoomUserSerializer(serializers.ModelSerializer):
+class ChatRoomMembersSerializer(serializers.Serializer):
+    class Action:
+        add = "add"
+        remove = "remove"
+
+    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
+    action = serializers.ChoiceField([Action.add, Action.remove])
+
     class Meta:
-        model = RoomUser
-        fields = "__all__"
+        fields = ("users", "action")
 
+    def validate(self, data: dict) -> dict:
+        instance = self.context["instance"]
+        if ChatRoom.ChatType.private.value == instance.chat_type:
+            raise serializers.ValidationError("Impossible to add or remove user")
+        return data
 
-class ChatMessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChatMessage
-        fields = "__all__"
-
-
-class ChatMessageReactionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChatMessageReaction
-        fields = "__all__"
+    def update(self) -> None:
+        instance = self.context["instance"]
+        users = self.validated_data["users"]
+        if self.validated_data.get("action") == ChatRoomMembersSerializer.Action.add:
+            instance.users.add(*users)
+        if self.validated_data.get("action") == ChatRoomMembersSerializer.Action.remove:
+            instance.users.remove(*users)
