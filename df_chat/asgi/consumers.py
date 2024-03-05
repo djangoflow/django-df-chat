@@ -74,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.set_member_channel(is_online=True)
         await self.subscribe()
 
-    async def disconnect(self) -> None:
+    async def disconnect(self, code) -> None:
         await self.unsubscribe()
         await self.set_member_channel(is_online=False)
 
