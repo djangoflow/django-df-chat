@@ -71,6 +71,18 @@ class ChatMessage(TimeStampedModel):
         "self", blank=True, null=True, on_delete=models.CASCADE, related_name="children"
     )
 
+    @property
+    def reactions(self):
+        """
+        Return a queryset of reactions
+        """
+        return self.children.filter(
+            message_type=MessageType.reaction,
+        ).order_by("message")
+
+    def __str__(self) -> str:
+        return f"{self.created_by} >> {self.message}"
+
     class Meta:
         indexes = [
             models.Index(
@@ -81,6 +93,3 @@ class ChatMessage(TimeStampedModel):
                 # condition=models.Q(message_type=MessageType.reaction),
             ),
         ]
-
-    def __str__(self) -> str:
-        return f"{self.created_by} >> {self.message}"

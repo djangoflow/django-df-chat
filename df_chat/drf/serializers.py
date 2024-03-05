@@ -73,20 +73,15 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         return data
 
     def get_reactions(self, message):
+        """
+        Transform the response into a different format,
+        groupped by the actual reaction message.
+        """
         response = []
         previous_message = None
         current_chunk = None
 
-        # query all reactions for this message and transform the response
-        # into a different format, groupped by the actual reaction message
-        for reaction in (
-            ChatMessage.objects.filter(
-                message_type=MessageType.reaction,
-                related_message=message,
-            )
-            .values()
-            .order_by("message")
-        ):
+        for reaction in message.reactions.values():
             if reaction["message"] != previous_message:
                 if current_chunk:
                     response.append(current_chunk)
