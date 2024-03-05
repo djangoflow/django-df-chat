@@ -18,7 +18,7 @@ from df_chat.drf.serializers import (
     ChatRoomMembersSerializer,
     ChatRoomSerializer,
 )
-from df_chat.models import ChatMessage, ChatRoom
+from df_chat.models import ChatMessage, ChatRoom, MessageType
 from df_chat.paginators import ChatMessagePagination, ChatRoomPagination
 
 User = get_user_model()
@@ -37,7 +37,10 @@ class MessageViewSet(
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self) -> QuerySet[ChatMessage]:
-        return ChatMessage.objects.filter(chat_room=self.kwargs.get("room_id"))
+        return ChatMessage.objects.filter(
+            chat_room=self.kwargs.get("room_id"),
+            message_type=MessageType.message,
+        )
 
     def get_serializer_class(
         self,
