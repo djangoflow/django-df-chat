@@ -194,3 +194,35 @@ class MessageViewSetTestCase(APITestCase):
         self.assertEqual(2, len(result["replies"]))
         self.assertEqual("It is a good day today", result["replies"][0]["message"])
         self.assertEqual("Indeed it is", result["replies"][1]["message"])
+
+    def test_message_displays_seen_by_and_received_by(self) -> None:
+        message = baker.prepare(
+            models.ChatMessage,
+            chat_room=self.chat_room,
+            created_by=self.user,
+            message="Hello World",
+        )
+        message.save()
+
+        user1 = baker.make(settings.AUTH_USER_MODEL)
+        user2 = baker.make(settings.AUTH_USER_MODEL)
+
+        message.received_by.add(user1)
+        message.received_by.add(user2)
+
+        message.seen_by.add(user1)
+
+        response = self.client.get(
+            f"/api/v1/chat/rooms/{self.chat_room.pk}/messages/{message.pk}/"
+        )
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+
+        self.assertIn("seen_by", result)
+        self.assertEqual(1, len(result["seen_by"]))
+        self.assertEqual(user1.pk, result["seen_by"][0]["user_id"])
+
+        self.assertIn("received_by", result)
+        self.assertEqual(2, len(result["received_by"]))
+        self.assertEqual(user1.pk, result["received_by"][0]["user_id"])
+        self.assertEqual(user2.pk, result["received_by"][1]["user_id"])

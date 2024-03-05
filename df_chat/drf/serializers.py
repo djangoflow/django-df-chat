@@ -2,7 +2,12 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from df_chat.models import ChatMember, ChatMessage, ChatRoom, MessageType
+from df_chat.models import (
+    ChatMember,
+    ChatMessage,
+    ChatRoom,
+    MessageType,
+)
 
 User = get_user_model()
 
@@ -53,6 +58,8 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     )
     reactions = serializers.SerializerMethodField("get_reactions")
     replies = serializers.SerializerMethodField("get_replies")
+    seen_by = serializers.SerializerMethodField("get_seen_by")
+    received_by = serializers.SerializerMethodField("get_received_by")
 
     def to_internal_value(self, raw_data: dict) -> dict:
         data = super().to_internal_value(raw_data)
@@ -105,6 +112,12 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     def get_replies(self, message):
         return message.replies.values() or []
 
+    def get_seen_by(self, message):
+        return message.seen_by.through.objects.values().order_by("created")
+
+    def get_received_by(self, message):
+        return message.received_by.through.objects.values().order_by("created")
+
     class Meta:
         model = ChatMessage
         fields = (
@@ -117,6 +130,8 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "parent",
             "reactions",
             "replies",
+            "seen_by",
+            "received_by",
         )
 
 

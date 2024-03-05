@@ -58,7 +58,11 @@ class MessageType(models.IntegerChoices):
 
 class ChatMessageManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().prefetch_related("children")
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related("children", "seen_by", "received_by")
+        )
 
 
 class ChatMessage(TimeStampedModel):
@@ -74,6 +78,18 @@ class ChatMessage(TimeStampedModel):
     )
     parent = models.ForeignKey(
         "self", blank=True, null=True, on_delete=models.CASCADE, related_name="children"
+    )
+    seen_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="message_seen_set",
+        through="df_chat.MessageSeenBy",
+    )
+    received_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="message_received_set",
+        through="df_chat.MessageReceivedBy",
     )
 
     objects = ChatMessageManager()
@@ -109,3 +125,13 @@ class ChatMessage(TimeStampedModel):
                 # condition=models.Q(message_type=MessageType.reaction),
             ),
         ]
+
+
+class MessageSeenBy(TimeStampedModel):
+    message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+
+class MessageReceivedBy(TimeStampedModel):
+    message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
