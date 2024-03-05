@@ -87,6 +87,15 @@ class ChatMessage(TimeStampedModel):
             message_type=MessageType.reaction,
         ).order_by("message")
 
+    @property
+    def replies(self):
+        """
+        Return a queryset of replies
+        """
+        return self.children.filter(
+            message_type=MessageType.response,
+        ).order_by("created")
+
     def __str__(self) -> str:
         return f"{self.created_by} >> {self.message}"
 
