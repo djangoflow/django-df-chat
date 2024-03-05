@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from df_chat.models import ChatMember, ChatMessage, ChatRoom
+from df_chat.models import ChatMember, ChatMessage, ChatRoom, MessageType
 
 User = get_user_model()
 
@@ -50,6 +50,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     chat_room = serializers.PrimaryKeyRelatedField(
         queryset=ChatRoom.objects.all(), many=False, required=False
     )
+    reactions = serializers.SerializerMethodField("get_reactions")
 
     def to_internal_value(self, raw_data: dict) -> dict:
         data = super().to_internal_value(raw_data)
@@ -57,6 +58,40 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         if data["chat_room"] is None and view and view.kwargs.get("room_id"):
             data["chat_room"] = ChatRoom.objects.get(id=view.kwargs.get("room_id"))
         return data
+
+    def get_reactions(self, message):
+        response = []
+        previous_message = None
+        current_chunk = None
+
+        # query all reactions for this message and transform the response
+        # into a different format, groupped by the actual reaction message
+        for reaction in (
+            ChatMessage.objects.filter(
+                message_type=MessageType.reaction,
+                related_message=message,
+            )
+            .values()
+            .order_by("message")
+        ):
+            if reaction["message"] != previous_message:
+                if current_chunk:
+                    response.append(current_chunk)
+
+                current_chunk = {
+                    "content": reaction["message"],
+                    "reactions": [reaction],
+                }
+            else:
+                current_chunk["reactions"].append(reaction)
+
+            previous_message = reaction["message"]
+
+        # append if anything that's left at the end
+        if current_chunk:
+            response.append(current_chunk)
+
+        return response
 
     class Meta:
         model = ChatMessage
@@ -68,6 +103,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "created",
             "message_type",
             "parent",
+            "reactions",
         )
 
 
