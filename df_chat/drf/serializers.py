@@ -27,6 +27,8 @@ class ChatMessageUpdateSerializer(serializers.ModelSerializer):
             "message",
             "chat_room",
             "created_by",
+            "message_type",
+            "parent",
         )
         read_only_fields = (
             "id",
@@ -34,6 +36,8 @@ class ChatMessageUpdateSerializer(serializers.ModelSerializer):
             "modified",
             "chat_room",
             "created_by",
+            "message_type",
+            "parent",
         )
 
 
@@ -62,6 +66,8 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "created_by",
             "message",
             "created",
+            "message_type",
+            "parent",
         )
 
 
