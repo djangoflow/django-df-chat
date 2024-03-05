@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.test import override_settings
 from model_bakery import baker
 from rest_framework.test import APITestCase
 
@@ -114,3 +115,45 @@ class MessageViewSetTestCase(APITestCase):
                 self.assertEqual(2, len(reaction["reactions"]))
             elif reaction["content"] == "eyes":
                 self.assertEqual(1, len(reaction["reactions"]))
+
+    def test_disallowed_reactions_are_rejected(self) -> None:
+        message = baker.make(models.ChatMessage)
+
+        data = {
+            "chat_room": self.chat_room.pk,
+            "created_by": self.user.pk,
+            # allowed values are defined in tests/settings.py
+            "message": "fire",
+            "message_type": models.MessageType.reaction,
+            "parent": message.pk,
+        }
+        response = self.client.post(
+            f"/api/v1/chat/rooms/{self.chat_room.pk}/messages/", data, format="json"
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid reaction", response.json()["errors"][0]["message"])
+
+    def test_unknown_reactions_are_allowed_when_settings_is_empty(self) -> None:
+        message = baker.make(models.ChatMessage)
+
+        data = {
+            "chat_room": self.chat_room.pk,
+            "created_by": self.user.pk,
+            "message": "fire",
+            "message_type": models.MessageType.reaction,
+            "parent": message.pk,
+        }
+
+        # allowed values are defined in tests/settings.py
+        with override_settings(DF_CHAT_ALLOWED_REACTIONS=()):
+            response = self.client.post(
+                f"/api/v1/chat/rooms/{self.chat_room.pk}/messages/", data, format="json"
+            )
+            self.assertEqual(response.status_code, 201)
+            self.assertEqual(
+                1,
+                models.ChatMessage.objects.filter(
+                    message_type=models.MessageType.reaction,
+                    message="fire",
+                ).count(),
+            )

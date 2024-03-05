@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -57,6 +58,18 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         view = self.context.get("view")
         if data["chat_room"] is None and view and view.kwargs.get("room_id"):
             data["chat_room"] = ChatRoom.objects.get(id=view.kwargs.get("room_id"))
+        return data
+
+    def validate(self, data: dict) -> dict:
+        """
+        Check that only allowed reactions make it through!
+        """
+        message_type = data["message_type"]
+        reaction = data["message"]
+        allowed = getattr(settings, "DF_CHAT_ALLOWED_REACTIONS", ())
+
+        if message_type == MessageType.reaction and allowed and reaction not in allowed:
+            raise serializers.ValidationError(f"Invalid reaction '{reaction}'")
         return data
 
     def get_reactions(self, message):
