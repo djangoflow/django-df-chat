@@ -112,6 +112,8 @@ DF_CHAT_ALLOWED_REACTIONS = {
     "+1",
     "-1",
     "eyes",
+    "👍",
+    "👎",
 }
 
 # Local in-memory backend
