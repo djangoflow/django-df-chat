@@ -1,23 +1,24 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from df_chat.mixins import IdStringRepresentationSerializerMixin
 from df_chat.models import ChatMember, ChatMessage, ChatRoom
+from df_chat.settings import api_settings
 
 User = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(
+    IdStringRepresentationSerializerMixin, serializers.ModelSerializer
+):
     class Meta:
         model = User
-        fields = [
-            "id",
-            "first_name",
-            "last_name",
-            "email",
-        ]
+        fields = api_settings.DEFAULT_USER_SERIALIZER_FIELDS
 
 
-class ChatMessageUpdateSerializer(serializers.ModelSerializer):
+class ChatMessageUpdateSerializer(
+    IdStringRepresentationSerializerMixin, serializers.ModelSerializer
+):
     class Meta:
         model = ChatMessage
         fields = (
@@ -37,12 +38,15 @@ class ChatMessageUpdateSerializer(serializers.ModelSerializer):
         )
 
 
-class ChatMessageSerializer(serializers.ModelSerializer):
+class ChatMessageSerializer(
+    IdStringRepresentationSerializerMixin, serializers.ModelSerializer
+):
     created_by = serializers.PrimaryKeyRelatedField(
         default=serializers.CurrentUserDefault(),
         queryset=User.objects.all(),
         required=False,
     )
+    user = UserSerializer(read_only=True, source="created_by")
     chat_room = serializers.PrimaryKeyRelatedField(
         queryset=ChatRoom.objects.all(), many=False, required=False
     )
@@ -56,16 +60,12 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChatMessage
-        fields = (
-            "id",
-            "chat_room",
-            "created_by",
-            "message",
-            "created",
-        )
+        fields = ("id", "chat_room", "created_by", "message", "created", "user")
 
 
-class ChatRoomSerializer(serializers.ModelSerializer):
+class ChatRoomSerializer(
+    IdStringRepresentationSerializerMixin, serializers.ModelSerializer
+):
     newest_message = serializers.CharField(read_only=True)
     users = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), write_only=True, many=True
