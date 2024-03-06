@@ -1,7 +1,13 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from df_chat.models import ChatMember, ChatMessage, ChatRoom
+from df_chat.models import (
+    ChatMember,
+    ChatMessage,
+    ChatRoom,
+    MessageType,
+)
 
 User = get_user_model()
 
@@ -27,6 +33,8 @@ class ChatMessageUpdateSerializer(serializers.ModelSerializer):
             "message",
             "chat_room",
             "created_by",
+            "message_type",
+            "parent",
         )
         read_only_fields = (
             "id",
@@ -34,6 +42,8 @@ class ChatMessageUpdateSerializer(serializers.ModelSerializer):
             "modified",
             "chat_room",
             "created_by",
+            "message_type",
+            "parent",
         )
 
 
@@ -46,6 +56,10 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     chat_room = serializers.PrimaryKeyRelatedField(
         queryset=ChatRoom.objects.all(), many=False, required=False
     )
+    reactions = serializers.SerializerMethodField("get_reactions")
+    replies = serializers.SerializerMethodField("get_replies")
+    seen_by = serializers.SerializerMethodField("get_seen_by")
+    received_by = serializers.SerializerMethodField("get_received_by")
 
     def to_internal_value(self, raw_data: dict) -> dict:
         data = super().to_internal_value(raw_data)
@@ -53,6 +67,56 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         if data["chat_room"] is None and view and view.kwargs.get("room_id"):
             data["chat_room"] = ChatRoom.objects.get(id=view.kwargs.get("room_id"))
         return data
+
+    def validate(self, data: dict) -> dict:
+        """
+        Check that only allowed reactions make it through!
+        """
+        message_type = data["message_type"]
+        reaction = data["message"]
+        allowed = getattr(settings, "DF_CHAT_ALLOWED_REACTIONS", ())
+
+        if message_type == MessageType.reaction and allowed and reaction not in allowed:
+            raise serializers.ValidationError(f"Invalid reaction '{reaction}'")
+        return data
+
+    def get_reactions(self, message):
+        """
+        Transform the response into a different format,
+        groupped by the actual reaction message.
+        """
+        response = []
+        previous_message = None
+        current_chunk = None
+
+        for reaction in message.reactions.values():
+            if reaction["message"] != previous_message:
+                if current_chunk:
+                    response.append(current_chunk)
+
+                current_chunk = {
+                    "content": reaction["message"],
+                    "reactions": [reaction],
+                }
+            else:
+                current_chunk["reactions"].append(reaction)
+
+            previous_message = reaction["message"]
+
+        # append if anything that's left at the end
+        if current_chunk:
+            response.append(current_chunk)
+
+        return response
+
+    def get_replies(self, message):
+        return message.replies.values() or []
+
+    def get_seen_by(self, message):
+        return message.seen_by.through.objects.values().order_by("created") or []
+
+    def get_received_by(self, message):
+        return message.received_by.through.objects.values().order_by("created") or []
 
     class Meta:
         model = ChatMessage
@@ -62,7 +126,43 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "created_by",
             "message",
             "created",
+            "message_type",
+            "parent",
+            "reactions",
+            "replies",
+            "seen_by",
+            "received_by",
         )
+
+
+class MessageSeenBySerializer(serializers.Serializer):
+    class Action:
+        add = "add"
+        remove = "remove"
+
+    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
+    action = serializers.ChoiceField([Action.add, Action.remove])
+
+    class Meta:
+        fields = ("user", "action")
+
+    def update(self) -> None:
+        instance = self.context["instance"]
+        users = self.validated_data["users"]
+        if self.validated_data.get("action") == self.__class__.Action.add:
+            instance.seen_by.add(*users)
+        if self.validated_data.get("action") == self.__class__.Action.remove:
+            instance.seen_by.remove(*users)
+
+
+class MessageReceivedBySerializer(MessageSeenBySerializer):
+    def update(self) -> None:
+        instance = self.context["instance"]
+        users = self.validated_data["users"]
+        if self.validated_data.get("action") == self.__class__.Action.add:
+            instance.received_by.add(*users)
+        if self.validated_data.get("action") == self.__class__.Action.remove:
+            instance.received_by.remove(*users)
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):

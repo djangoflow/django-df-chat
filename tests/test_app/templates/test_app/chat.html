@@ -702,9 +702,14 @@
 	<div class="content">
 		<div class="messages">
 			<ul>
-				<li :class="[activeUserId == message.created_by ? 'replies' :  'sent' ]" v-for="message in messages">
+				<li :class="[activeUserId == message.created_by ? 'replies' :  'sent' ]" v-for="message in messages" v-if="message.message_type == 0">
 					<span>user id: [[message.created_by]]</span>
-                    <p>[[ message.message ]]</p>
+                                        <p>
+                                            [[ message.message ]]
+                                            <i v-for="reaction in message.reactions" :title="reaction.reactions.length">[[ reaction.content ]]</i>
+                                        </p>
+                                        <button @click="sendReaction" :data-message-id="message.id" data-reaction="👍">+1</button>
+                                        <button @click="sendReaction" :data-message-id="message.id" data-reaction="👎">-1</button>
 				</li>
 			</ul>
 		</div>
@@ -793,6 +798,21 @@ var app = new Vue({
             }));
         this.typedMessage = '';
     },
+    sendReaction(event) {
+        trigger = $(event.target);
+        relatedId = trigger.data('message-id')
+        reaction = trigger.data('reaction')
+
+        data = JSON.stringify({
+                "type": "chat.message.new",
+                'message': reaction,
+                'message_type': 2, // reaction
+                'parent': relatedId,
+                "chat_room": this.activeRoom
+        });
+
+        this.connection.send(data);
+    }
   }
 });
 
