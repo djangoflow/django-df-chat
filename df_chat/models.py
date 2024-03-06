@@ -56,6 +56,11 @@ class MessageType(models.IntegerChoices):
     reaction = 2, _("Reaction")
 
 
+class ChatMessageManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("children")
+
+
 class ChatMessage(TimeStampedModel):
     chat_room = models.ForeignKey(
         ChatRoom,
@@ -70,6 +75,8 @@ class ChatMessage(TimeStampedModel):
     parent = models.ForeignKey(
         "self", blank=True, null=True, on_delete=models.CASCADE, related_name="children"
     )
+
+    objects = ChatMessageManager()
 
     @property
     def reactions(self):
