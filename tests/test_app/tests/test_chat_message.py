@@ -53,13 +53,12 @@ class MessageViewSetTestCase(APITestCase):
         )
 
     def test_message_displays_empty_reactions(self) -> None:
-        message = baker.prepare(
+        message = baker.make(
             models.ChatMessage,
             chat_room=self.chat_room,
             created_by=self.user,
             message="Hello World",
         )
-        message.save()
 
         response = self.client.get(
             f"/api/v1/chat/rooms/{self.chat_room.pk}/messages/{message.pk}/"
@@ -70,13 +69,12 @@ class MessageViewSetTestCase(APITestCase):
         self.assertEqual([], result["reactions"])
 
     def test_message_displays_its_reactions(self) -> None:
-        message = baker.prepare(
+        message = baker.make(
             models.ChatMessage,
             chat_room=self.chat_room,
             created_by=self.user,
             message="Hello World",
         )
-        message.save()
 
         baker.make(
             models.ChatMessage,
@@ -159,13 +157,12 @@ class MessageViewSetTestCase(APITestCase):
             )
 
     def test_message_displays_its_replies(self) -> None:
-        message = baker.prepare(
+        message = baker.make(
             models.ChatMessage,
             chat_room=self.chat_room,
             created_by=self.user,
             message="Hello World",
         )
-        message.save()
 
         baker.make(
             models.ChatMessage,
@@ -196,13 +193,12 @@ class MessageViewSetTestCase(APITestCase):
         self.assertEqual("Indeed it is", result["replies"][1]["message"])
 
     def test_message_displays_seen_by_and_received_by(self) -> None:
-        message = baker.prepare(
+        message = baker.make(
             models.ChatMessage,
             chat_room=self.chat_room,
             created_by=self.user,
             message="Hello World",
         )
-        message.save()
 
         user1 = baker.make(settings.AUTH_USER_MODEL)
         user2 = baker.make(settings.AUTH_USER_MODEL)
