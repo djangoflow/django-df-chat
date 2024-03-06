@@ -52,6 +52,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         queryset=ChatRoom.objects.all(), many=False, required=False
     )
     reactions = serializers.SerializerMethodField("get_reactions")
+    replies = serializers.SerializerMethodField("get_replies")
 
     def to_internal_value(self, raw_data: dict) -> dict:
         data = super().to_internal_value(raw_data)
@@ -101,6 +102,9 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
         return response
 
+    def get_replies(self, message):
+        return message.replies.values() or []
+
     class Meta:
         model = ChatMessage
         fields = (
@@ -112,6 +116,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "message_type",
             "parent",
             "reactions",
+            "replies",
         )
 
 

@@ -157,3 +157,40 @@ class MessageViewSetTestCase(APITestCase):
                     message="fire",
                 ).count(),
             )
+
+    def test_message_displays_its_replies(self) -> None:
+        message = baker.prepare(
+            models.ChatMessage,
+            chat_room=self.chat_room,
+            created_by=self.user,
+            message="Hello World",
+        )
+        message.save()
+
+        baker.make(
+            models.ChatMessage,
+            chat_room=self.chat_room,
+            message="It is a good day today",
+            message_type=models.MessageType.response,
+            parent=message,
+        )
+
+        baker.make(
+            models.ChatMessage,
+            chat_room=self.chat_room,
+            message="Indeed it is",
+            message_type=models.MessageType.response,
+            parent=message,
+        )
+
+        response = self.client.get(
+            f"/api/v1/chat/rooms/{self.chat_room.pk}/messages/{message.pk}/"
+        )
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+
+        # assert on the correct groupping
+        self.assertIn("replies", result)
+        self.assertEqual(2, len(result["replies"]))
+        self.assertEqual("It is a good day today", result["replies"][0]["message"])
+        self.assertEqual("Indeed it is", result["replies"][1]["message"])
