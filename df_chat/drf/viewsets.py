@@ -17,6 +17,8 @@ from df_chat.drf.serializers import (
     ChatMessageUpdateSerializer,
     ChatRoomMembersSerializer,
     ChatRoomSerializer,
+    MessageReceivedBySerializer,
+    MessageSeenBySerializer,
 )
 from df_chat.models import ChatMessage, ChatRoom, MessageType
 from df_chat.paginators import ChatMessagePagination, ChatRoomPagination
@@ -49,6 +51,38 @@ class MessageViewSet(
         if self.request.method in ["PATCH", "PUT"]:
             serializer_class = ChatMessageUpdateSerializer
         return serializer_class
+
+    @action(
+        detail=True,
+        methods=["POST"],
+        serializer_class=MessageSeenBySerializer,
+        pagination_class=None,
+        url_path="seen_by",
+    )
+    def seen_by(self, request: Request, **kwargs: dict[str, Any]) -> Response:
+        instance = self.get_object()
+        serializer = MessageSeenBySerializer(
+            data=request.data, context={"request": request, "instance": instance}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.update()
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=["POST"],
+        serializer_class=MessageReceivedBySerializer,
+        pagination_class=None,
+        url_path="received_by",
+    )
+    def received_by(self, request: Request, **kwargs: dict[str, Any]) -> Response:
+        instance = self.get_object()
+        serializer = MessageReceivedBySerializer(
+            data=request.data, context={"request": request, "instance": instance}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.update()
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
 class RoomViewSet(

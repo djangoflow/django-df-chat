@@ -226,3 +226,50 @@ class MessageViewSetTestCase(APITestCase):
         self.assertEqual(2, len(result["received_by"]))
         self.assertEqual(user1.pk, result["received_by"][0]["user_id"])
         self.assertEqual(user2.pk, result["received_by"][1]["user_id"])
+
+    def test_marking_message_as_received_updates_db(self) -> None:
+        message = baker.make(
+            models.ChatMessage,
+            chat_room=self.chat_room,
+            created_by=self.user,
+            message="Hello World",
+        )
+        user1 = baker.make(settings.AUTH_USER_MODEL)
+
+        data = {
+            "action": "add",
+            "users": [user1.pk],
+        }
+        response = self.client.post(
+            f"/api/v1/chat/rooms/{self.chat_room.pk}/messages/{message.pk}/received_by/",
+            data,
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(message.received_by.filter(pk=user1.pk).exists())
+
+    def test_updating_message_seen_by_updates_db(self) -> None:
+        message = baker.make(
+            models.ChatMessage,
+            chat_room=self.chat_room,
+            created_by=self.user,
+            message="Hello World",
+        )
+        user1 = baker.make(settings.AUTH_USER_MODEL)
+        user2 = baker.make(settings.AUTH_USER_MODEL)
+
+        message.seen_by.add(user1)
+        message.seen_by.add(user2)
+
+        data = {
+            "action": "remove",
+            "users": [user1.pk],
+        }
+        response = self.client.post(
+            f"/api/v1/chat/rooms/{self.chat_room.pk}/messages/{message.pk}/seen_by/",
+            data,
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(message.seen_by.filter(pk=user1.pk).exists())
+        self.assertTrue(message.seen_by.filter(pk=user2.pk).exists())

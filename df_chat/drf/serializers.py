@@ -113,10 +113,10 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         return message.replies.values() or []
 
     def get_seen_by(self, message):
-        return message.seen_by.through.objects.values().order_by("created")
+        return message.seen_by.through.objects.values().order_by("created") or []
 
     def get_received_by(self, message):
-        return message.received_by.through.objects.values().order_by("created")
+        return message.received_by.through.objects.values().order_by("created") or []
 
     class Meta:
         model = ChatMessage
@@ -133,6 +133,36 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             "seen_by",
             "received_by",
         )
+
+
+class MessageSeenBySerializer(serializers.Serializer):
+    class Action:
+        add = "add"
+        remove = "remove"
+
+    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
+    action = serializers.ChoiceField([Action.add, Action.remove])
+
+    class Meta:
+        fields = ("user", "action")
+
+    def update(self) -> None:
+        instance = self.context["instance"]
+        users = self.validated_data["users"]
+        if self.validated_data.get("action") == self.__class__.Action.add:
+            instance.seen_by.add(*users)
+        if self.validated_data.get("action") == self.__class__.Action.remove:
+            instance.seen_by.remove(*users)
+
+
+class MessageReceivedBySerializer(MessageSeenBySerializer):
+    def update(self) -> None:
+        instance = self.context["instance"]
+        users = self.validated_data["users"]
+        if self.validated_data.get("action") == self.__class__.Action.add:
+            instance.received_by.add(*users)
+        if self.validated_data.get("action") == self.__class__.Action.remove:
+            instance.received_by.remove(*users)
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
