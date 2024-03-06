@@ -11,7 +11,7 @@ from df_chat.constants import (
     USER_CHAT_ALIAS,
 )
 from df_chat.drf.serializers import ChatMessageSerializer
-from df_chat.models import MemberChannel
+from df_chat.models import MemberChannel, MessageType
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -74,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.set_member_channel(is_online=True)
         await self.subscribe()
 
-    async def disconnect(self) -> None:
+    async def disconnect(self, code) -> None:
         await self.unsubscribe()
         await self.set_member_channel(is_online=False)
 
@@ -102,6 +102,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "chat_room": event.get("chat_room"),
                 "created_by": self.user.id,
                 "message": event.get("message", ""),
+                "message_type": event.get("message_type", MessageType.message),
+                "parent": event.get("parent", None),
             }
         )
         if serializer.is_valid():

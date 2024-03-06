@@ -108,6 +108,14 @@ DF_CHAT = {
     "CHAT_USER_MODEL": "test_app.ChatUser",
 }
 
+DF_CHAT_ALLOWED_REACTIONS = {
+    "+1",
+    "-1",
+    "eyes",
+    "👍",
+    "👎",
+}
+
 # Local in-memory backend
 # Check if os.getenv("REDIS_URL") exists
 if not DEBUG:

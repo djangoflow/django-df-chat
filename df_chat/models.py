@@ -50,6 +50,17 @@ class ChatMember(TimeStampedModel):
         return f"Room: {self.chat_room.id} - User {self.user.id}"
 
 
+class MessageType(models.IntegerChoices):
+    message = 0, _("Regular message")
+    response = 1, _("Message response")
+    reaction = 2, _("Reaction")
+
+
+class ChatMessageManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("children")
+
+
 class ChatMessage(TimeStampedModel):
     chat_room = models.ForeignKey(
         ChatRoom,
@@ -58,6 +69,43 @@ class ChatMessage(TimeStampedModel):
 
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     message = models.TextField(null=False, blank=False)
+    message_type = models.IntegerField(
+        choices=MessageType.choices, default=MessageType.message
+    )
+    parent = models.ForeignKey(
+        "self", blank=True, null=True, on_delete=models.CASCADE, related_name="children"
+    )
+
+    objects = ChatMessageManager()
+
+    @property
+    def reactions(self):
+        """
+        Return a queryset of reactions
+        """
+        return self.children.filter(
+            message_type=MessageType.reaction,
+        ).order_by("message")
+
+    @property
+    def replies(self):
+        """
+        Return a queryset of replies
+        """
+        return self.children.filter(
+            message_type=MessageType.response,
+        ).order_by("created")
 
     def __str__(self) -> str:
         return f"{self.created_by} >> {self.message}"
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["parent"],
+                # Should work on Postgres but may not work on other DB engines.
+                # Notably MariaDB/MySQL do not support conditional indexes, see
+                # https://docs.djangoproject.com/en/5.0/ref/models/indexes/#condition
+                # condition=models.Q(message_type=MessageType.reaction),
+            ),
+        ]
