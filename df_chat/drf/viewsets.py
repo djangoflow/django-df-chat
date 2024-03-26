@@ -17,6 +17,7 @@ from df_chat.drf.serializers import (
     ChatMessageUpdateSerializer,
     ChatRoomMembersSerializer,
     ChatRoomSerializer,
+    UserSerializer,
 )
 from df_chat.models import ChatMessage, ChatRoom
 from df_chat.paginators import ChatMessagePagination, ChatRoomPagination
@@ -77,11 +78,24 @@ class RoomViewSet(
         pagination_class=None,
         url_path="member",
     )
-    def members(self, request: Request, **kwargs: dict[str, Any]) -> Response:
+    def member(self, request: Request, **kwargs: dict[str, Any]) -> Response:
         instance = self.get_object()
         serializer = ChatRoomMembersSerializer(
             data=request.data, context={"request": request, "instance": instance}
         )
         serializer.is_valid(raise_exception=True)
         serializer.update()
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True,
+        methods=["GET"],
+        serializer_class=UserSerializer,
+        pagination_class=None,
+    )
+    def members(self, request: Request, **kwargs) -> Response:
+        instance = self.get_object()
+        serializer = UserSerializer(
+            instance.users.all(), many=True, context={"request": request}
+        )
         return Response(data=serializer.data, status=status.HTTP_200_OK)
