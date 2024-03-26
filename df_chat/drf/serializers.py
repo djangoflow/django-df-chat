@@ -41,12 +41,13 @@ class ChatMessageUpdateSerializer(
 class ChatMessageSerializer(
     IdStringRepresentationSerializerMixin, serializers.ModelSerializer
 ):
-    created_by = serializers.PrimaryKeyRelatedField(
-        default=serializers.CurrentUserDefault(),
-        queryset=User.objects.all(),
-        required=False,
-    )
-    user = UserSerializer(read_only=True, source="created_by")
+    # created_by = serializers.PrimaryKeyRelatedField(
+    #     default=serializers.CurrentUserDefault(),
+    #     queryset=User.objects.all(),
+    #     required=False,
+    # )
+    created_by = UserSerializer(read_only=True)
+    # user = UserSerializer(read_only=True, source="created_by")
     chat_room = serializers.PrimaryKeyRelatedField(
         queryset=ChatRoom.objects.all(), many=False, required=False
     )
@@ -60,7 +61,7 @@ class ChatMessageSerializer(
 
     class Meta:
         model = ChatMessage
-        fields = ("id", "chat_room", "created_by", "message", "created", "user")
+        fields = ("id", "chat_room", "created_by", "message", "created")
 
 
 class ChatRoomSerializer(

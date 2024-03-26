@@ -40,6 +40,9 @@ class MessageViewSet(
     def get_queryset(self) -> QuerySet[ChatMessage]:
         return ChatMessage.objects.filter(chat_room=self.kwargs.get("room_id"))
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
     def get_serializer_class(
         self,
     ) -> Any:

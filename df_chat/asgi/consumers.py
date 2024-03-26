@@ -100,12 +100,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         serializer = ChatMessageSerializer(
             data={
                 "chat_room": event.get("chat_room"),
-                "created_by": self.user.id,
                 "message": event.get("message", ""),
             }
         )
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(created_by_id=self.user.id)
             return serializer.data
         return None
 
