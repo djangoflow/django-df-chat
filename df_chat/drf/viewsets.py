@@ -15,9 +15,9 @@ from rest_framework.viewsets import GenericViewSet
 from df_chat.drf.serializers import (
     ChatMessageSerializer,
     ChatMessageUpdateSerializer,
+    ChatRoomMemberListSerializer,
     ChatRoomMembersSerializer,
     ChatRoomSerializer,
-    UserSerializer,
 )
 from df_chat.models import ChatMessage, ChatRoom
 from df_chat.paginators import ChatMessagePagination, ChatRoomPagination
@@ -93,12 +93,12 @@ class RoomViewSet(
     @action(
         detail=True,
         methods=["GET"],
-        serializer_class=UserSerializer,
+        serializer_class=ChatRoomMemberListSerializer,
         pagination_class=None,
     )
     def members(self, request: Request, **kwargs) -> Response:
         instance = self.get_object()
-        serializer = UserSerializer(
-            instance.users.all(), many=True, context={"request": request}
+        serializer = ChatRoomMemberListSerializer(
+            instance,
         )
         return Response(data=serializer.data, status=status.HTTP_200_OK)

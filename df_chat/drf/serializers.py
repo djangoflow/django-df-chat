@@ -100,6 +100,14 @@ class ChatRoomSerializer(
         return instance
 
 
+class ChatRoomMemberListSerializer(serializers.ModelSerializer):
+    members = UserSerializer(source="users", many=True, read_only=True)
+
+    class Meta:
+        model = ChatRoom
+        fields = ("members",)
+
+
 class ChatRoomMembersSerializer(serializers.Serializer):
     class Action:
         add = "add"
