@@ -95,6 +95,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message_new(self, event: dict) -> None:
         await self.send(text_data=json.dumps(event))
 
+    async def chat_message_update(self, event: dict) -> None:
+        await self.send(text_data=json.dumps(event))
+
     @database_sync_to_async
     def store_message_to_db(self, event: dict) -> typing.Optional[ReturnDict]:
         serializer = ChatMessageSerializer(
