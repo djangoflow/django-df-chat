@@ -80,17 +80,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data: str) -> None:
         text_data_json = json.loads(text_data)
-        ws_room_name = None
-        data = None
         if text_data_json.get("type") == "chat.message.new":
-            data = await self.store_message_to_db(text_data_json)
-            ws_room_name = ROOM_CHAT_ALIAS.format(
-                room_id=text_data_json.get("chat_room")
-            )
-        if ws_room_name and data:
-            await self.channel_layer.group_send(
-                ws_room_name, {"type": text_data_json.get("type"), **data}
-            )
+            await self.store_message_to_db(text_data_json)
 
     async def chat_message_new(self, event: dict) -> None:
         await self.send(text_data=json.dumps(event))
@@ -102,14 +93,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def store_message_to_db(self, event: dict) -> typing.Optional[ReturnDict]:
         serializer = ChatMessageSerializer(
             data={
-                "chat_room": event.get("chat_room"),
                 "message": event.get("message", ""),
             }
         )
         if serializer.is_valid():
-            serializer.save(created_by_id=self.user.id)
-            return serializer.data
-        return None
+            serializer.save(
+                created_by_id=self.user.id, chat_room_id=event.get("chat_room")
+            )
 
     @database_sync_to_async
     def set_member_channel(self, is_online: bool) -> None:

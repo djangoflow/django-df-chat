@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = api_settings.DEFAULT_USER_SERIALIZER_FIELDS
 
 
-class ChatMessageCreateUpdateSerializer(serializers.ModelSerializer):
+class ChatMessageSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
 
     class Meta:
@@ -40,7 +40,7 @@ class ChatMessageCreateUpdateSerializer(serializers.ModelSerializer):
     def _post_to_ws(self, instance, message_type, **kwargs):
         channel_layer = get_channel_layer()
         ws_room_name = ROOM_CHAT_ALIAS.format(room_id=instance.chat_room.id)
-        message_data = ChatMessageCreateUpdateSerializer(instance=instance).data
+        message_data = ChatMessageSerializer(instance=instance).data
         async_to_sync(channel_layer.group_send)(
             ws_room_name, {"type": message_type, **message_data}
         )
@@ -54,24 +54,6 @@ class ChatMessageCreateUpdateSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
         self._post_to_ws(instance, "chat.message.update")
         return instance
-
-
-class ChatMessageSerializer(serializers.ModelSerializer):
-    created_by = UserSerializer(read_only=True)
-    chat_room = serializers.PrimaryKeyRelatedField(
-        queryset=ChatRoom.objects.all(), many=False, required=False
-    )
-
-    def to_internal_value(self, raw_data: dict) -> dict:
-        data = super().to_internal_value(raw_data)
-        view = self.context.get("view")
-        if data["chat_room"] is None and view and view.kwargs.get("room_id"):
-            data["chat_room"] = ChatRoom.objects.get(id=view.kwargs.get("room_id"))
-        return data
-
-    class Meta:
-        model = ChatMessage
-        fields = ("id", "chat_room", "created_by", "message", "created")
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
