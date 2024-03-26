@@ -13,7 +13,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from df_chat.drf.serializers import (
-    ChatMessageCreateUpdateSerializer,
     ChatMessageSerializer,
     ChatRoomMemberListSerializer,
     ChatRoomMembersSerializer,
@@ -42,14 +41,6 @@ class MessageViewSet(
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-
-    def get_serializer_class(
-        self,
-    ) -> Any:
-        serializer_class = self.serializer_class
-        if self.request.method in ["PATCH", "PUT", "POST"]:
-            serializer_class = ChatMessageCreateUpdateSerializer
-        return serializer_class
 
     def perform_create(self, serializer):  # noqa
         serializer.save(
