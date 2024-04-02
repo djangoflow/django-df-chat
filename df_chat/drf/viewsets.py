@@ -3,10 +3,6 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from django.db.models import Max, OuterRef, QuerySet, Subquery
 from rest_framework import mixins, permissions, status
-from rest_framework.authentication import (
-    BasicAuthentication,
-    SessionAuthentication,
-)
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -56,7 +52,6 @@ class RoomViewSet(
     mixins.UpdateModelMixin,
     GenericViewSet,
 ):
-    authentication_classes = (SessionAuthentication, BasicAuthentication)
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ChatRoomSerializer
     pagination_class = ChatRoomPagination
